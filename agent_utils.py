@@ -1,48 +1,22 @@
 from torch.distributions.categorical import Categorical
 import copy
 
+from calPriority import calculate_dynamic_priority_rules
+from utils import *
+
 def override(fn):
     """
     override decorator
     """
     return fn
-def select_action(p, cadidate, memory):
+def select_action(p, eligible, memory):
     pri = ['LFT','LST','EST','EFT','FIFO','RAND','SPT','MTS','GRPW','GRD','IRSM','WCS','ACS']
     dist = Categorical(p.squeeze())
     s = dist.sample()
-    priority_rule = pri[s]
 
-    if (priority_rule == 'LFT'):
-        return eligible[find_index(eligible, self.latest_finish_times, 'min')]
-    elif (priority_rule == 'LST'):
-        return eligible[find_index(eligible, self.latest_start_times, 'min')]
-    elif (priority_rule == 'EST'):
-        return eligible[find_index(eligible, self.earliest_start_times, 'min')]
-    elif (priority_rule == 'EFT'):
-        return eligible[find_index(eligible, self.earliest_finish_times, 'min')]
-    elif (priority_rule == 'FIFO'):
-        return sorted(eligible)[0]
-    elif (priority_rule == 'RAND'):
-        return random.choice(eligible)
-    elif (priority_rule == 'SPT'):
-        return eligible[find_index(eligible, self.durations, 'min')]
-    elif (priority_rule == 'MTS'):
-        return eligible[find_index(eligible, self.mts, 'max')]
-    elif (priority_rule == 'GRPW'):
-        return eligible[find_index(eligible, self.grpw, 'max')]
-    elif (priority_rule == 'GRD'):
-        return eligible[find_index(eligible, self.grd, 'max')]
-    elif (priority_rule == 'IRSM'):
-        return eligible[find_index(eligible, self.irsm, 'min')]
-    elif (priority_rule == 'WCS'):
-        return eligible[find_index(eligible, self.wcs, 'min')]
-    elif (priority_rule == 'ACS'):
-        return eligible[find_index(eligible, self.acs, 'min')]
-    else:
-        print("Invalid priority rule")
-
-    if memory is not None: memory.logprobs.append(dist.log_prob(s))
-    return cadidate[s], s
+    if memory is not None:
+        memory.logprobs.append(dist.log_prob(s))
+    return s
 
 def parelle(allTasks, finished,running,finishedID,total_resource,operaNumber,AON):
     t= 0
@@ -53,7 +27,7 @@ def parelle(allTasks, finished,running,finishedID,total_resource,operaNumber,AON
         D = conditionCheck(allTasks,AON,operaNumber,finishedID)
         #找到不冲突任务集W
         while True:
-            W = findW(D,total_resource,running)
+            W = findW(allTasks,D,total_resource,running)
             if len(W) > 0:
                 taskj = W[0]
                 taskj.es = t
@@ -77,7 +51,7 @@ def parelle(allTasks, finished,running,finishedID,total_resource,operaNumber,AON
         if len(finished)==len(allTasks):
             break
 
-def findW(D,total_resource,P):
+def findW(allTasks,D,total_resource,P):
 
     W =[]
     useNowResource = [0 for i in range(len(total_resource))]
@@ -89,36 +63,43 @@ def findW(D,total_resource,P):
     tempuseNowResource = copy.deepcopy(useNowResource)
 
     for task in D:
-        for k in range(len(useNowResource)):
-            if tempuseNowResource[k] > total_resource[k]:
-                break
         flag = True
         for k in range(len(useNowResource)):
-            if tempuseNowResource[k] + task.resources[k] > total_resource[k]:
+            if tempuseNowResource[k] + allTasks[task].resources[k] > total_resource[k]:
                 flag = False
                 break
         if flag == True:
             W.append(task)
 
             for k in range(len(useNowResource)):
-                tempuseNowResource[k] += task.resources[k]
+                tempuseNowResource[k] += allTasks[task].resources[k]
     W.sort(key=lambda x: x.priority)
     return  W
 
-def conditionCheck(allltasks,AON,code,s):
-    D =[]
-    for i in range(code) :
-        if i in s:
+def conditionUpdateAndCheck(allltasks,current_consumption,finished):
+
+
+    # 满足紧前工序已完成的工序
+    precedence_eligible =[]
+    # 满足紧前工序已结束的工序中满足资源约束的工序
+    eligible = []
+
+    for i in range(FixedMes.Activity_num):
+        if i in finished:
             continue
-        flag =True
-        prenumber = AON[i] #前序
+        flag = True
+        prenumber = allltasks[i].predecessor #前序
         for ordernumber in prenumber:
-            if ordernumber not in s:
+            if ordernumber not in finished:
                 flag = False
                 break
         if flag == True:
-            D.append(allltasks[i-1])
-    return D
+            precedence_eligible.append(allltasks[i].id)
+
+    for i in precedence_eligible:
+        if (less_than(allltasks[i].resourceRequestH, sub_lists(FixedMes.total_Huamn_resource, current_consumption))):
+            eligible.append(i)
+    return eligible
 
 # evaluate the actions
 def eval_actions(p, actions):

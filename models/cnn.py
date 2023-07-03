@@ -35,6 +35,7 @@ class cnnNet(nn.Module):
     def __init__(self, input_dim, hidden_dims, hidden_dim,kernel):
         super(cnnNet, self).__init__()
 
+
         # convolution layers
         self.conv_1 = nn.Conv2d(3, hidden_dims[0], kernel[0], stride=1)
         self.conv_2 = nn.Conv2d(hidden_dims[0], hidden_dims[1], kernel[1], stride=1)
@@ -42,21 +43,24 @@ class cnnNet(nn.Module):
         self.bn_1 = nn.BatchNorm2d(hidden_dims[0])
         self.bn_2 = nn.BatchNorm2d(hidden_dims[1])
         self.bn_3 = nn.BatchNorm2d(hidden_dims[2])
-        self.relu = nn.ReLU()
+
+        self.activate_func = [nn.ReLU(), nn.Tanh()][0]  # Trick10: use tanh
+
         self.flatten = nn.Flatten()
 
         # normalize the para of cnn network
         n1 = self.conv_1.kernel_size[0] * self.conv_1.kernel_size[1] * self.conv_1.out_channels
         n2 = self.conv_2.kernel_size[0] * self.conv_2.kernel_size[1] * self.conv_2.out_channels
         n3 = self.conv_3.kernel_size[0] * self.conv_3.kernel_size[1] * self.conv_3.out_channels
+
         self.conv_1.weight.data.normal_(0, math.sqrt(2. / n1))
         self.conv_2.weight.data.normal_(0, math.sqrt(2. / n2))
         self.conv_3.weight.data.normal_(0, math.sqrt(2. / n3))
 
         self.cnn = nn.Sequential(
-            self.conv_1, self.bn_1, self.relu,  # ,
-            self.conv_2, self.bn_2, self.relu,
-            self.conv_3, self.bn_3, self.relu
+            self.conv_1, self.bn_1, self.activate_func,  # ,
+            self.conv_2, self.bn_2, self.activate_func,
+            self.conv_3, self.bn_3, self.activate_func
         )
 
         # check the output of cnn, which is [fc1_dims]

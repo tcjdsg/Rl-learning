@@ -7,6 +7,7 @@ class FixedMes(object):
     distance:
     orderInputMes:
     """
+    pri = ['LFT','LST','EST','EFT','FIFO','RAND','SPT','MTS','GRPW','GRD','IRSM','WCS','ACS']
     #全局时钟
     t = 0
 
