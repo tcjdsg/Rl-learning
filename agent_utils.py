@@ -18,7 +18,7 @@ def select_action(p, eligible, memory):
         memory.logprobs.append(dist.log_prob(s))
     return s
 
-def conditionUpdateAndCheck(allltasks,current_consumption,finished):
+def conditionUpdateAndCheck(allltasks,current_consumption,finished,partitial):
 
 
     # 满足紧前工序已完成的工序
@@ -27,8 +27,9 @@ def conditionUpdateAndCheck(allltasks,current_consumption,finished):
     eligible = []
 
     for i in range(FixedMes.Activity_num):
-        if i in finished:
+        if i in partitial or i in finished:
             continue
+
         flag = True
         prenumber = allltasks[i].predecessor #前序
         for ordernumber in prenumber:

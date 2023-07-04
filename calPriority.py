@@ -52,7 +52,7 @@ def calculate_grd(SucOrder):
         for j in range(len(SucOrder[i].resourceRequestH)):
             SucOrder[i].grd += SucOrder[i].duration * SucOrder[i].resourceRequestH[j]
 
-def calculate_dynamic_priority_rules(alltasks,eligible, current_time, current_consumption, active_list, finish_times):
+def calculate_dynamic_priority_rules(alltasks,eligible, current_time, current_consumption, active_list):
         """
             Calculates IRSM, WCS, ACS priority values
 
@@ -70,16 +70,16 @@ def calculate_dynamic_priority_rules(alltasks,eligible, current_time, current_co
             for i in eligible:
                 if (i != j):
                     irsm_val = max(
-                        earliest_start(alltasks,j, i, current_time, current_consumption, active_list, finish_times) -
+                        earliest_start(alltasks,j, i, current_time, current_consumption, active_list) -
                         alltasks[i].ls, irsm_val)
-                    curr_e_val =earliest_start(alltasks,i, j, current_time, current_consumption, active_list, finish_times)
+                    curr_e_val =earliest_start(alltasks,i, j, current_time, current_consumption, active_list)
                     max_e_val = max(curr_e_val, max_e_val)
                     sum_e_vals += curr_e_val
             alltasks[j].irsm = irsm_val
             alltasks[j].wcs = alltasks[j].ls - max_e_val
             alltasks[j].acs = alltasks[j].ls - (1 / (len(eligible) - 1)) * sum_e_vals
 
-def earliest_start(alltasks, i, j, current_time, current_consumption, active_list, finish_times):
+def earliest_start(alltasks, i, j, current_time, current_consumption, active_list):
         """
             Find's the earliest time j can be scheduled if i is scheduled at current_time
 
@@ -100,16 +100,16 @@ def earliest_start(alltasks, i, j, current_time, current_consumption, active_lis
         else:
             new_consumption = [elem for elem in current_consumption]
 
-            new_time = current_time
+            new_time = round(current_time,1)
             finished = [0] * (len(active_list))
             while (not isCSP(alltasks,i, j, new_consumption)):
                 for act in active_list:
                     jzj = act // FixedMes.planeOrderNum
                     task = act % FixedMes.planeOrderNum
-                    if finish_times[jzj][task] == new_time and finished[active_list.index(act)] == 0:
+                    if round(alltasks[act].ef, 1) == round(new_time,1) and finished[active_list.index(act)] == 0:
                         finished[active_list.index(act)] = 1
                         new_consumption = sub_lists(new_consumption, alltasks[act].resourceRequestH)
-                new_time += 1
+                new_time += 0.1
             starts.append(new_time)
         return min(starts)
 

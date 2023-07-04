@@ -14,6 +14,9 @@ class Order(object):
         self.belong_plane_id = jzjId
         self.vacp = 0
 
+        #入场时间
+        self.ST = 0
+
         self.duration = duration
         self.resourceRequestH = resourceRequestH
         self.resourceRequestS = resourceRequestS
@@ -30,7 +33,7 @@ class Order(object):
         self.grd=0
 
         self.acs=0
-        self.wsc=0
+        self.wcs=0
         self.irsm=0
 
         self.scheduled = False

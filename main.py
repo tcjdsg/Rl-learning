@@ -18,7 +18,6 @@ device = torch.device(configs.device)
 
 from JzjEnv import JZJ
 
-
 class Runner:
     def __init__(self, configs,number,seed):
         self.args = configs
@@ -31,22 +30,18 @@ class Runner:
         # Set random seed
         np.random.seed(self.seed)
         torch.manual_seed(self.seed)
-        self.env.seed(seed)
-
+        # self.env.seed(seed)
 
   # Maximum number of steps per episode
         print("envJZJ={}".format(configs.n_j))
-        print("state_dim={}".format(configs.state_dim))
-        print("action_dim={}".format(configs.action_dim))
-        print("episode_limit={}".format(configs.episode_limit))
-
+        print("episode_limit={}".format(configs.n_j*configs.n_m))
         self.replay_buffer = ReplayBuffer(configs)
 
+        self.episode_limit = configs.n_j*configs.n_m
 
         self.agent = PPO(
               n_j=configs.n_j,
               n_m=configs.n_m,
-
               input_dim=configs.input_dim,
               hidden_dims=[32,64,32],
               kernels=[1,3,3],
@@ -56,7 +51,7 @@ class Runner:
               hidden_dim_actor=configs.hidden_dim_actor,
               num_mlp_layers_critic=configs.num_mlp_layers_critic,
               hidden_dim_critic=configs.hidden_dim_critic,
-              out_priority_dim=len(FixedMes.pri),
+              out_priority_dim = configs.action_dim,
               device = device,
               )
 
@@ -75,11 +70,12 @@ class Runner:
 
     def run(self, ):
         evaluate_num = -1  # Record the number of evaluations
-        while self.total_steps < self.args.max_train_steps:
+        while self.total_steps < self.args.max_updates:
             if self.total_steps // self.args.evaluate_freq > evaluate_num:
                 self.evaluate_policy()  # Evaluate the policy every 'evaluate_freq' steps
                 evaluate_num += 1
-
+                
+            print("------------one episode-------------")
             _, episode_steps = self.run_episode()  # Run an episode
             self.total_steps += episode_steps
 
@@ -89,22 +85,21 @@ class Runner:
 
         self.evaluate_policy()
         self.env.close()
-
     def run_episode(self, ):
+
         episode_reward = 0
         s = self.env.reset()
         if self.args.use_reward_scaling:
             self.reward_scaling.reset()
         # self.agent.reset_rnn_hidden()
-        for episode_step in range(self.args.episode_limit):
+        for episode_step in range(configs.n_j * configs.n_m):
             if self.args.use_state_norm:
                 s = self.state_norm(s)
             a, a_logprob = self.agent.choose_action(s, evaluate=False)
             v = self.agent.get_value(s)
             s_, r, done, _ = self.env.step(a)
             episode_reward += r
-
-            if done and episode_step + 1 != self.args.episode_limit:
+            if done and episode_step + 1 != self.episode_limit:
                 dw = True
             else:
                 dw = False
@@ -115,15 +110,12 @@ class Runner:
             s = s_
             if done:
                 break
-
         # An episode is over, store v in the last step
         if self.args.use_state_norm:
             s = self.state_norm(s)
         v = self.agent.get_value(s)
         self.replay_buffer.store_last_value(episode_step + 1, v)
-
         return episode_reward, episode_step + 1
-
     def evaluate_policy(self, ):
         evaluate_reward = 0
         for _ in range(self.args.evaluate_times):
@@ -138,7 +130,6 @@ class Runner:
                 episode_reward += r
                 s = s_
             evaluate_reward += episode_reward
-
         evaluate_reward = evaluate_reward / self.args.evaluate_times
         self.evaluate_rewards.append(evaluate_reward)
         print("total_steps:{} \t evaluate_reward:{}".format(self.total_steps, evaluate_reward))
@@ -150,6 +141,7 @@ class Runner:
 
 if __name__ == '__main__':
     total1 = time.time()
-    Runner( configs, 1, 1)
+    JZJ=Runner( configs, 8, 19)
+    JZJ.run()
     total2 = time.time()
     # print(total2 - total1)

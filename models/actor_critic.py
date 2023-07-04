@@ -20,13 +20,11 @@ class ActorCritic(nn.Module):
     def __init__(self,
                  n_j,
                  n_m,
-
-
                  input_dim,
+
                  hidden_dims,
                  kernel,
                  hidden_dim,
-
                  num_mlp_layers_actor,
                  hidden_dim_actor,
 
@@ -46,8 +44,8 @@ class ActorCritic(nn.Module):
         self.activate_func = [nn.ReLU(), nn.Tanh()][0]  # Trick10: use tanh
 
         self.feature_extract = cnnNet( input_dim, hidden_dims, hidden_dim, kernel).to(device)
-        self.actor = MLPActor(num_mlp_layers_actor, hidden_dim*2, hidden_dim_actor, out_priority_dim).to(device)
-        self.critic = MLPCritic(num_mlp_layers_critic, hidden_dim, hidden_dim_critic, 1).to(device)
+        self.actorN = MLPActor(num_mlp_layers_actor, hidden_dim, hidden_dim_actor, out_priority_dim).to(device)
+        self.criticN = MLPCritic(num_mlp_layers_critic, hidden_dim, hidden_dim_critic, 1).to(device)
         # use_orthogonal_init =True
         # if use_orthogonal_init:
         #     print("------use orthogonal init------")
@@ -56,17 +54,14 @@ class ActorCritic(nn.Module):
         #     orthogonal_init(self.critic)
 
     def actor(self, s):
-        h_priority = self.feature_extract(s)
+        h_priority = self.feature_extract.run(s)
         h = self.activate_func(h_priority)
-
-        pi = self.actor(h)
+        pi = self.actorN(h)
         return pi
     def critic(self,x):
-
-        h_priority = self.feature_extract(x=x)
+        h_priority = self.feature_extract.run(x=x)
         h = self. activate_func(h_priority)
-
-        v = self.critic(h)
+        v = self.criticN(h)
         return  v
 
 

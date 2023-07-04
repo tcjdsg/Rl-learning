@@ -33,11 +33,12 @@ class ReplayBuffer:
         self.lamda = args.lamda
         self.use_adv_norm = args.use_adv_norm
         self.input_dim = args.input_dim
-        self.action_dim = args.action_dim
-        self.episode_limit = args.max_updates
+
+
         self.batch_size = args.batch_size
         self.jzjN = args.n_j
         self.taskN = args.n_m
+        self.episode_limit = self.jzjN * self.taskN
         self.episode_num = 0
         self.max_episode_len = 0
         self.buffer = None

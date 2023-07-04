@@ -35,6 +35,14 @@ def find_index(index_list,value_list,stat='min'):
                 pos=i
     return pos
 import random
+
+#随机生成入场时间
+def getST(jzjNumber):
+    time = 5
+    sigma =  5 / 3
+    lower, upper = 0, time + sigma  # 截断在[0, μ+σ]
+    X = stats.truncnorm((lower) / sigma, (upper - time) / sigma, loc=time, scale=sigma).rvs()
+
 def getTime(j, i):
 
     def truncnorm(time):

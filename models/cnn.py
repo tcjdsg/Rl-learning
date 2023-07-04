@@ -3,6 +3,8 @@ import math
 import torch
 from torch import nn
 
+from Params import configs
+
 
 def __reset_param_impl__(cnn_net):
     """
@@ -37,7 +39,7 @@ class cnnNet(nn.Module):
 
 
         # convolution layers
-        self.conv_1 = nn.Conv2d(3, hidden_dims[0], kernel[0], stride=1)
+        self.conv_1 = nn.Conv2d(input_dim, hidden_dims[0], kernel[0], stride=1)
         self.conv_2 = nn.Conv2d(hidden_dims[0], hidden_dims[1], kernel[1], stride=1)
         self.conv_3 = nn.Conv2d(hidden_dims[1], hidden_dims[2], kernel[2], stride=1)
         self.bn_1 = nn.BatchNorm2d(hidden_dims[0])
@@ -64,7 +66,7 @@ class cnnNet(nn.Module):
         )
 
         # check the output of cnn, which is [fc1_dims]
-        self.fcn_inputs_length = self.cnn_out_dim(input_dim)
+        self.fcn_inputs_length = self.cnn_out_dim([input_dim,configs.n_j,configs.n_m])
 
         # fully connected layers
         self.fc1 = nn.Linear(self.fcn_inputs_length, hidden_dim)
@@ -76,7 +78,7 @@ class cnnNet(nn.Module):
 
         )
 
-    def forward(self, x):
+    def run(self, x):
         '''
             - x : tensor in shape of (N, state_dim)
         '''
