@@ -9,11 +9,7 @@ from Params import configs
 from agent_utils import  conditionUpdateAndCheck
 from  read.preprocess import InitM
 from agent_utils import override
-
-from JZJenv.Activitity import Order
 from JZJenv.FixedMess import FixedMes
-from JZJenv.Human import Human
-from JZJenv.Station import Station
 
 filenameDis = "dis.csv"
 class JZJ(gym.Env):
@@ -65,6 +61,7 @@ class JZJ(gym.Env):
                                              self.finished_time)
 
         #基于规则选择工件
+
         activityIndex = self.returnActivity(priority_rule)
 
         self.can_be_scheduled_mark = [[0 for _ in range(self.number_of_opera)] for _ in range(self.number_of_JZJ)]
@@ -74,11 +71,10 @@ class JZJ(gym.Env):
         maxend_Time = self.Cmax
 
         if activityIndex is not None and activityIndex not in self.partial_sol_sequeence:
-
             # 更新信息
             self.eligible.remove(activityIndex)
-            row = activityIndex // self.number_of_JZJ
-            col = activityIndex % self.number_of_JZJ
+            row = activityIndex // self.number_of_opera
+            col = activityIndex % self.number_of_opera
             self.step_count += 1
             self.partial_sol_sequeence.append(activityIndex)
 
@@ -99,36 +95,45 @@ class JZJ(gym.Env):
             self.end_Time.append(current_time + dur_a)
             maxend_Time = sorted(self.end_Time, key=lambda x:x)[-1]
 
+            eli = []
+            self.t = current_time
+            for i in self.eligible:
+                if (less_than(self.activities[i].resourceRequestH,
+                              sub_lists(FixedMes.total_Huamn_resource, self.current_consumption))):
+                    eli.append(i)
 
-            if len(self.eligible) > 0:
+
+            if len(eli) > 0:
                 #如果还有可用的，就还是这个集合
-                self.t = current_time
+                self.eligible =eli
 
             else:
                 #找到新的最早结束时间
-                self.t = sorted([self.activities[i].ef for i in self.running_tasks])[0]
-                current_time = self.t
-                for i in self.running_tasks:
-                    if (self.activities[i].ef <= current_time):
-                        self.finished.append(i)
-                        self.finished_mark[i // self.number_of_JZJ][i % self.number_of_JZJ] = 1
-                        self.finished_time[i // self.number_of_JZJ][i % self.number_of_JZJ] = self.activities[i].ef
-                        self.activities[i].working = False
-                        self.activities[i].complete = True
-                        self.current_consumption = sub_lists(self.current_consumption,
+                while len(self.eligible)==0:
+                    self.t = sorted([self.activities[i].ef for i in self.running_tasks])[0]
+                    current_time = self.t
+                    removals =[]
+                    for i in self.running_tasks:
+                        if (self.activities[i].ef <= current_time):
+                            self.finished.append(i)
+                            self.finished_mark[i // self.number_of_opera][i % self.number_of_opera] = 1
+                            self.finished_time[i // self.number_of_opera][i % self.number_of_opera] = self.activities[i].ef
+                            self.activities[i].working = False
+                            self.activities[i].complete = True
+                            self.current_consumption = sub_lists(self.current_consumption,
                                                              self.activities[i].resourceRequestH)
-                        removals.append(i)
+                            removals.append(i)
 
-                for i in removals:
-                    self.running_tasks.remove(i)
+                    for i in removals:
+                        self.running_tasks.remove(i)
 
-                self.eligible = conditionUpdateAndCheck(self.activities,
+                    self.eligible = conditionUpdateAndCheck(self.activities,
                                                     self.current_consumption,
                                                     self.finished)
 
             for num in self.eligible:
-                    row = num // self.number_of_JZJ
-                    col = num % self.number_of_JZJ
+                    row = num // self.number_of_opera
+                    col = num % self.number_of_opera
                     self.can_be_scheduled_mark[row][col] = 1
 
         # prepare for return
@@ -140,6 +145,8 @@ class JZJ(gym.Env):
             reward = configs.rewardscale
             self.posRewards += reward
         self.Cmax = maxend_Time
+
+        print(activityIndex,env.Cmax)
 
         return fea, reward, self.done(), self.Cmax
 
@@ -204,13 +211,6 @@ class JZJ(gym.Env):
         for i,activity in self.static_activities.items():
             activity.es = 0
             activity.ef = 0
-            activity.ls = 0
-            activity.lf = 0
-            activity.tf = 0
-            activity.mts =0
-            activity.grpw = 0
-            activity.GRD=0
-
             activity.acs=0
             activity.wsc=0
             activity.irsm=0
@@ -242,10 +242,17 @@ class JZJ(gym.Env):
         self.initQuality=0
         self.Cmax = 0
 
-        self.current_consumption = [0 for _ in range(FixedMes.total_Huamn_resource)]
+        self.current_consumption = [0 for _ in range(len(FixedMes.total_Huamn_resource))]
         fea =  np.array([self.finished_time,self.scheduled_mark,self.can_be_scheduled_mark])
         #allltasks,current_consumption,running,allNums,finished
-        self.eligible = conditionUpdateAndCheck(self.static_activities,self.current_consumption, self.finished)
+        self.eligible = conditionUpdateAndCheck(self.static_activities, self.current_consumption, self.finished)
 
 
         return  fea
+
+if __name__ == '__main__':
+    env = JZJ(configs.n_j, configs.n_m)
+    env.reset()
+    for i in range(228):
+        env.step(0)
+

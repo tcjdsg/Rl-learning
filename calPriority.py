@@ -1,12 +1,14 @@
 import copy
 
-from JZJenv.FixedMess import FixedMes
 from utils import *
 
 
 def calLFTandMTS(SucOrder):
-    dfsLFT(SucOrder, 0)
-    dfsMTS(SucOrder, 0)
+    for i in range(FixedMes.planeNum):
+        dfsLFT(SucOrder, i*FixedMes.planeOrderNum)
+        dfsMTS(SucOrder, i*FixedMes.planeOrderNum)
+    calculate_grpw(SucOrder)
+    calculate_grd(SucOrder)
 
 def dfsLFT(SucOrder, i):
     if len(SucOrder[i].successor) == 0:
@@ -17,6 +19,7 @@ def dfsLFT(SucOrder, i):
     for Orderid in SucOrder[i].successor:
         time = min(time,dfsLFT(SucOrder,Orderid)-SucOrder[Orderid].duration)
     SucOrder[i].lf = time
+    SucOrder[i].ls = time - SucOrder[i].duration
     return time
 
 def dfsMTS(SucOrder,i):
@@ -30,29 +33,24 @@ def dfsMTS(SucOrder,i):
     SucOrder[i].mts = len(record)
     return record
 
-#
-# self.grpw = 0
-# self.GRD = 0
-#
-# self.ACS = 0
-# self.WCS = 0
+
 def calculate_grpw(SucOrder):
     """Calculates Greatest Rank Position Wight(GRPW) for each job"""
     for i in range(FixedMes.Activity_num):
         jzjId = SucOrder[i].belong_plane_id
         taskId = SucOrder[i].taskid
-        SucOrder[i].grpw = SucOrder[i].dur
+        SucOrder[i].grpw = SucOrder[i].duration
         for j in SucOrder[i].successor:
-            SucOrder[i].grpw += SucOrder[j].dur
+            SucOrder[i].grpw += SucOrder[j].duration
 
 
 def calculate_grd(SucOrder):
     for i in range(FixedMes.Activity_num):
         jzjId = SucOrder[i].belong_plane_id
         taskId = SucOrder[i].taskid
-        SucOrder[i].grpw = SucOrder[i].dur
-        for j in range(SucOrder[i].resourceRequestH):
-            SucOrder[i].GRD += SucOrder[i].dur * SucOrder[i].resourceRequestH[j]
+        SucOrder[i].grd = SucOrder[i].duration
+        for j in range(len(SucOrder[i].resourceRequestH)):
+            SucOrder[i].grd += SucOrder[i].duration * SucOrder[i].resourceRequestH[j]
 
 def calculate_dynamic_priority_rules(alltasks,eligible, current_time, current_consumption, active_list, finish_times):
         """
@@ -94,7 +92,7 @@ def earliest_start(alltasks, i, j, current_time, current_consumption, active_lis
             Returns:
                 E(i,j)
         """
-        starts = [current_time + alltasks[i].dur]
+        starts = [current_time + alltasks[i].duration]
         if isGFP(alltasks,i, j):
             pass
         elif isCSP(alltasks,i, j, current_consumption):
@@ -106,7 +104,7 @@ def earliest_start(alltasks, i, j, current_time, current_consumption, active_lis
             finished = [0] * (len(active_list))
             while (not isCSP(alltasks,i, j, new_consumption)):
                 for act in active_list:
-                    jzj = act // FixedMes.planeNum
+                    jzj = act // FixedMes.planeOrderNum
                     task = act % FixedMes.planeOrderNum
                     if finish_times[jzj][task] == new_time and finished[active_list.index(act)] == 0:
                         finished[active_list.index(act)] = 1

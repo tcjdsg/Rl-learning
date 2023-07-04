@@ -18,64 +18,6 @@ def select_action(p, eligible, memory):
         memory.logprobs.append(dist.log_prob(s))
     return s
 
-def parelle(allTasks, finished,running,finishedID,total_resource,operaNumber,AON):
-    t= 0
-    useNowResource = [0 for i in range(len(total_resource))]
-
-    while True:
-        #更新任务集
-        D = conditionCheck(allTasks,AON,operaNumber,finishedID)
-        #找到不冲突任务集W
-        while True:
-            W = findW(allTasks,D,total_resource,running)
-            if len(W) > 0:
-                taskj = W[0]
-                taskj.es = t
-                taskj.ef = t + taskj.dur
-                running.append(taskj)
-                D.remove(taskj)
-                finishedID.append(taskj.id)
-
-            else:
-                break
-
-        running.sort(key = lambda x:x.ef)
-        taski = running[0]
-        finished.append(taski)
-        t = taski.f
-        running.remove(taski)
-        for otherp in running:
-            if otherp.f == t:
-                running.remove(otherp)
-                finished.append(otherp)
-        if len(finished)==len(allTasks):
-            break
-
-def findW(allTasks,D,total_resource,P):
-
-    W =[]
-    useNowResource = [0 for i in range(len(total_resource))]
-
-    for k in range(len(total_resource)):
-        for p in P:
-            useNowResource[k] = useNowResource[k] + p.resources[k]
-
-    tempuseNowResource = copy.deepcopy(useNowResource)
-
-    for task in D:
-        flag = True
-        for k in range(len(useNowResource)):
-            if tempuseNowResource[k] + allTasks[task].resources[k] > total_resource[k]:
-                flag = False
-                break
-        if flag == True:
-            W.append(task)
-
-            for k in range(len(useNowResource)):
-                tempuseNowResource[k] += allTasks[task].resources[k]
-    W.sort(key=lambda x: x.priority)
-    return  W
-
 def conditionUpdateAndCheck(allltasks,current_consumption,finished):
 
 

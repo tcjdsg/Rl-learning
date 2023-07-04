@@ -106,11 +106,9 @@ class PPO:
                 actor_loss = -torch.min(surr1,
                                         surr2) - self.entropy_coef * dist_entropy  # shape(mini_batch_size, max_episode_len)
                 actor_loss = (actor_loss * batch['active'][index]).sum() / batch['active'][index].sum()
-
                 # critic_loss
                 critic_loss = (values_now - batch['v_target'][index]) ** 2
                 critic_loss = (critic_loss * batch['active'][index]).sum() / batch['active'][index].sum()
-
                 # Update
                 self.optimizer.zero_grad()
 

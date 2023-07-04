@@ -1,6 +1,6 @@
 import copy
 
-from conM.FixedMess import FixedMes
+from FixedMess import FixedMes
 
 
 class Human:

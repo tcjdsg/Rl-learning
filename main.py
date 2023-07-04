@@ -148,9 +148,6 @@ class Runner:
         np.save('./data_train/PPO_env_{}_number_{}_seed_{}.npy'.format(configs.n_j, self.number, self.seed),
                 np.array(self.evaluate_rewards))
 
-
-
-
 if __name__ == '__main__':
     total1 = time.time()
     Runner( configs, 1, 1)

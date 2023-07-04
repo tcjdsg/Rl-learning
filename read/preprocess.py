@@ -48,16 +48,15 @@ class InitM(object):
 
         preActDict = defaultdict(lambda: [])
         sucActDict = defaultdict(lambda: [])
-        for i in range(1,FixedMes.Activity_num):
-            preActDict[i].append(0)
+
         index = 0
 
         # 构建任务网络
         for i in range(FixedMes.planeNum):
             jzjNumber = FixedMes.jzjNumbers[i]
             for j in range(FixedMes.planeOrderNum):
-                index += 1
-                taskId = j+1
+
+                taskId = j
                 duration = FixedMes.OrderTime[taskId]
                 vacp = FixedMes.VACP[taskId]
                 resourceH = [0 for _ in range(FixedMes.Human_resource_type)]
@@ -73,33 +72,19 @@ class InitM(object):
 
                 SUCOrder = [num+(FixedMes.planeOrderNum)*i for num in FixedMes.SUCOrder[taskId]]
 
-                if len(FixedMes.SUCOrder[taskId])==0:
-                    SUCOrder.append((FixedMes.planeOrderNum)*FixedMes.planeNum+1)
                 sucActDict[index] = SUCOrder
 
                 task = Order(index, taskId,duration, resourceH,resourceS,resourceSpace,SUCOrder,jzjNumber)
                 task.vacp = vacp
                 activities[index] = task
+
                 for s in SUCOrder:
                     preActDict[s].append(index)
 
+                index += 1
+
         for act in activities.keys():
             activities[act].predecessor = preActDict[act]
-
-        SUCOrder = [i*FixedMes.planeOrderNum+1 for i in range(0, FixedMes.planeNum)]
-        sucActDict[0] = SUCOrder
-        preActDict[0] = []
-        resourceH = [0 for _ in range(FixedMes.Human_resource_type)]
-        resourceS = [0 for _ in range(FixedMes.station_resource_type)]
-        resourceSpace = [0 for _ in range(FixedMes.space_resource_type)]
-
-        activities[0] = Order(0, 0, 0, resourceH, resourceS, resourceSpace,SUCOrder, 0)
-        activities[0].predecessor = []
-
-        activities[index+1] = Order(index+1, 0, 0, resourceH, resourceS, resourceSpace,[], 0)
-        sucActDict[index+1] = []
-        preActDict[index+1] = [i*FixedMes.planeOrderNum for i in range(1, FixedMes.planeNum+1)]
-        activities[index+1].predecessor = [i*FixedMes.planeOrderNum for i in range(1, FixedMes.planeNum+1)]
 
         return  activities,sucActDict,preActDict
         # 活动数int， 资源数int， 资源限量np.array， 所有活动集合dic{活动代号：活动对象}

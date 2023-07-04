@@ -27,7 +27,7 @@ class Order(object):
         self.tf = 0
         self.mts =0
         self.grpw = 0
-        self.GRD=0
+        self.grd=0
 
         self.acs=0
         self.wsc=0
