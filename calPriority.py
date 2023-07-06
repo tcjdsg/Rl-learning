@@ -115,10 +115,10 @@ def earliest_start(alltasks, i, j, current_time, current_consumption, active_lis
 
 def isGFP(alltasks, i, j):
         """Checks if (i,j) is a Generally forbidden pair"""
-        return not less_than(add_lists(alltasks[i].resourceRequestH, alltasks[j].resourceRequestH), FixedMes.total_Huamn_resource)
+        return not less_than(add_lists(alltasks[i].resourceRequestH, alltasks[j].resourceRequestH), FixedMes.total_Human_resource)
 
 def isCSP(alltasks, i, j, current_consumption):
         "Checks if (i,j) is a currently schedulable pair(simultaneously)"
         new_consumption = add_lists(alltasks[i].resourceRequestH, alltasks[j].resourceRequestH)
         new_consumption = add_lists(new_consumption, current_consumption)
-        return less_than(new_consumption, FixedMes.total_Huamn_resource)
+        return less_than(new_consumption, FixedMes.total_Human_resource)

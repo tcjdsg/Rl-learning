@@ -24,6 +24,7 @@ class Runner:
 
         self.seed = seed
         self.number = number
+        self.episodeNum =0
         # Create env
         self.env = JZJ(configs.n_j, configs.n_m)
 
@@ -70,13 +71,15 @@ class Runner:
 
     def run(self, ):
         evaluate_num = -1  # Record the number of evaluations
-        while self.total_steps < self.args.max_updates:
+        while self.episodeNum < self.args.max_updates:
             if self.total_steps // self.args.evaluate_freq > evaluate_num:
+                print("Evaluate the policy every 'evaluate_freq' steps")
                 self.evaluate_policy()  # Evaluate the policy every 'evaluate_freq' steps
                 evaluate_num += 1
                 
             print("------------one episode-------------")
             _, episode_steps = self.run_episode()  # Run an episode
+            self.episodeNum+=1
             self.total_steps += episode_steps
 
             if self.replay_buffer.episode_num == self.args.batch_size:
@@ -141,7 +144,7 @@ class Runner:
 
 if __name__ == '__main__':
     total1 = time.time()
-    JZJ=Runner( configs, 8, 19)
+    JZJ=Runner( configs, configs.n_j, configs.n_m)
     JZJ.run()
     total2 = time.time()
     # print(total2 - total1)

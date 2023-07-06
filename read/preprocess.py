@@ -63,9 +63,9 @@ class InitM(object):
                 # nt()pri
                 resourceH[FixedMes.OrderInputMes[taskId][0][0]] = FixedMes.OrderInputMes[taskId][0][1]
 
-                resourceS = [0 for _ in range(FixedMes.station_resource_type)]
-                resourceS[FixedMes.OrderInputMes[taskId][1][0]] = FixedMes.OrderInputMes[taskId][1][1]
-
+                resourceS = -1
+                if FixedMes.OrderInputMes[taskId][1][1]>0:
+                    resourceS = FixedMes.OrderInputMes[taskId][1][0]
                 resourceSpace = [0 for _ in range(FixedMes.space_resource_type)]
                 if FixedMes.OrderInputMes[taskId][2][1]>0:
                     resourceSpace[jzjNumber-1] = FixedMes.OrderInputMes[taskId][2][1]

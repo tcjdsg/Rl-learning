@@ -1,6 +1,7 @@
 from torch.distributions.categorical import Categorical
 import copy
 
+from JZJenv.judge import judgeStation
 from calPriority import calculate_dynamic_priority_rules
 from utils import *
 
@@ -18,8 +19,7 @@ def select_action(p, eligible, memory):
         memory.logprobs.append(dist.log_prob(s))
     return s
 
-def conditionUpdateAndCheck(allltasks,current_consumption,finished,partitial):
-
+def conditionUpdateAndCheck(allltasks,current_consumption,finished,partitial,recordStation):
 
     # 满足紧前工序已完成的工序
     precedence_eligible =[]
@@ -40,7 +40,8 @@ def conditionUpdateAndCheck(allltasks,current_consumption,finished,partitial):
             precedence_eligible.append(allltasks[i].id)
 
     for i in precedence_eligible:
-        if (less_than(allltasks[i].resourceRequestH, sub_lists(FixedMes.total_Huamn_resource, current_consumption))):
+        if (less_than(allltasks[i].resourceRequestH, sub_lists(FixedMes.total_Human_resource, current_consumption)))\
+                and judgeStation(allltasks,i,recordStation)[0]==True:
             eligible.append(i)
     return eligible
 

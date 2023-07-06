@@ -1,6 +1,6 @@
 import copy
 
-from FixedMess import FixedMes
+from JZJenv.FixedMess import FixedMes
 
 
 class Human:
@@ -14,7 +14,7 @@ class Human:
         self.walkState = False
         self.rest = 0.75
 
-
+        self.working = False
         self.fatigue = 0
         self.record_fatigue = []
         self.alreadyworkTime = 0

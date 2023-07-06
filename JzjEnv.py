@@ -1,7 +1,11 @@
 import copy
 import sys
 
+from JZJenv.Human import Human
+from JZJenv.Station import Station
+from JZJenv.judge import judgeStation, allocationStation, allocationHuman
 from calPriority import *
+from draw.drawPeople import Draw_gantt
 from utils import *
 import gym
 import random
@@ -69,7 +73,11 @@ class JZJ(gym.Env):
         assert activityIndex is not None and activityIndex not in self.partial_sol_sequeence
 
         if activityIndex is not None and activityIndex not in self.partial_sol_sequeence:
+
+            [flag,eligibleStation] = judgeStation(self.activities, activityIndex, self.recordStation)
+            assert flag==True
             # 更新信息
+
             self.eligible.remove(activityIndex)
             row = activityIndex // self.number_of_opera
             col = activityIndex % self.number_of_opera
@@ -84,6 +92,15 @@ class JZJ(gym.Env):
 
             self.activities[activityIndex].es = current_time
             self.activities[activityIndex].ef = current_time + dur_a
+
+            StationInfo  = allocationStation(self.activities[activityIndex], self.Stations, eligibleStation)
+            allocationHuman(self.activities[activityIndex], self.Humans)
+            # 记录设备工作状态
+            if len(StationInfo) > 0:
+
+                self.recordStation[StationInfo[0]][StationInfo[1]] = 1
+
+            # 记录人员消耗
             self.current_consumption = add_lists(self.current_consumption,
                                                  self.activities[activityIndex].resourceRequestH)
             self.running_tasks.append(activityIndex)
@@ -93,7 +110,8 @@ class JZJ(gym.Env):
             self.t = current_time
             for i in self.eligible:
                 if (less_than(self.activities[i].resourceRequestH,
-                              sub_lists(FixedMes.total_Huamn_resource, self.current_consumption))):
+                              sub_lists(FixedMes.total_Human_resource, self.current_consumption)))\
+                    and judgeStation(self.activities, i, self.recordStation)[0]==True:
                     eli.append(i)
 
             self.eligible = eli
@@ -115,6 +133,21 @@ class JZJ(gym.Env):
                             self.activities[i].complete = True
                             self.current_consumption = sub_lists(self.current_consumption,
                                                              self.activities[i].resourceRequestH)
+
+
+
+                            if self.activities[i].RequestStationType >= 0:
+                                typeS = self.activities[i].SheiBei[0][0]
+                                index = self.activities[i].SheiBei[0][1]
+                                self.recordStation[typeS][index] = 0
+                                self.Stations[typeS][index].working = False
+
+
+                            for infoHuman in self.activities[i].HumanNums:
+                                type = infoHuman[0]
+                                index = infoHuman[1]
+                                self.Humans[type][index].working = False
+
                             removals.append(i)
 
 
@@ -126,7 +159,9 @@ class JZJ(gym.Env):
 
                     self.eligible = conditionUpdateAndCheck(self.activities,
                                                     self.current_consumption,
-                                                    self.finished,self.partial_sol_sequeence)
+                                                    self.finished,
+                                                    self.partial_sol_sequeence,
+                                                    self.recordStation)
 
             for num in self.eligible:
                     row = num // self.number_of_opera
@@ -156,14 +191,7 @@ class JZJ(gym.Env):
             for i in self.eligible:
                 value_lists.append(self.activities[i].ls)
             return self.eligible[find_index(self.eligible, value_lists, 'min')]
-        # elif (priority_rule == 'EST'):
-        #     for i in self.eligible:
-        #         value_lists.append(self.activities[i].es)
-        #     return self.eligible[find_index(self.eligible, value_lists, 'min')]
-        # elif (priority_rule == 'EFT'):
-        #     for i in self.eligible:
-        #         value_lists.append(self.activities[i].ef)
-        #     return self.eligible[find_index(self.eligible, value_lists, 'min')]
+
         elif (priority_rule == 'FIFO'):
             return sorted(self.eligible)[0]
         elif (priority_rule == 'RAND'):
@@ -198,8 +226,31 @@ class JZJ(gym.Env):
             return self.eligible[find_index(self.eligible, value_lists, 'min')]
         else:
             print("Invalid priority rule")
+
+    def init(self):
+        self.Humans = []
+        self.Stations = []
+        number = 0
+        for i in range(FixedMes.Human_resource_type):
+                self.Humans.append([])
+                for j in range(FixedMes.total_Human_resource[i]):
+                    # ij都是从0开头 ,number也是
+                    self.Humans[i].append(Human([i, j, number]))
+                    number += 1
+
+
+        number = 0
+        for i in range(FixedMes.station_resource_type):
+                self.Stations.append([])
+                for j in range(FixedMes.total_station_resource[i]):
+                    # ij都是从0开头 ,number也是
+                    self.Stations[i].append(Station([i, j, number]))
+                    number += 1
     @override
     def reset(self):
+
+        #人员设备初始化
+        self.init()
 
         self.t = 0
         for i, activity in self.static_activities.items():
@@ -228,31 +279,35 @@ class JZJ(gym.Env):
         self.can_be_scheduled_mark = [[0 for _ in range(self.number_of_opera)] for _ in range(self.number_of_JZJ)]
 
         self.running_tasks = []
-
         self.end_Time = []
-
-        self.finished =[]
-
+        self.finished = []
         self.step_count = 0
         # record action history
         self.partial_sol_sequeence = []
+        self.recordStation = [[0 for _ in range(FixedMes.total_station_resource[i])]
+                              for i in range(len(FixedMes.total_station_resource))]
 
 
         self.posRewards = 0
         self.initQuality=0
         self.Cmax = 0
-        self.current_consumption = [0 for _ in range(len(FixedMes.total_Huamn_resource))]
+        self.current_consumption = [0 for _ in range(len(FixedMes.total_Human_resource))]
         fea = np.array(
             [self.finished_time , self.scheduled_mark, self.can_be_scheduled_mark])
         #allltasks,current_consumption,running,allNums,finished
-        self.eligible = conditionUpdateAndCheck(self.static_activities, self.current_consumption, self.finished,self.partial_sol_sequeence)
+        self.eligible = conditionUpdateAndCheck(self.static_activities,
+                                                self.current_consumption,
+                                                self.finished,
+                                                self.partial_sol_sequeence,
+                                                self.recordStation)
 
-        return  fea
+        return fea
 
 if __name__ == '__main__':
     env = JZJ(configs.n_j, configs.n_m)
     env.reset()
     for i in range(configs.n_j* configs.n_m):
 
-        env.step(0)
+        env.step(3)
+    Draw_gantt(env.Humans)
 

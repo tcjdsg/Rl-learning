@@ -7,7 +7,7 @@ class FixedMes(object):
     distance:
     orderInputMes:
     """
-    pri = ['LFT','LST','EST','EFT','FIFO','RAND','SPT','MTS','GRPW','GRD','IRSM','WCS','ACS']
+    pri = ['LFT','LST','FIFO','RAND','SPT','MTS','GRPW','GRD','IRSM','WCS','ACS']
     #全局时钟
     t = 0
 
@@ -20,12 +20,12 @@ class FixedMes(object):
     planeOrderNum = 19
     planeNum = 8
     jzjNumbers=[1,2,3,4,5,6,7,8]  #舰载机编号
+    jzjStartTime = [0,1,2,3,4,5,6,7] #舰载机入场时间
 
     #座舱限制。相当于是每个站位都有一个座舱，每个舰载机只能用自己座舱。
     space_resource_type = planeNum
     total_space_resource = [1 for i in range(planeNum)]
-
-    Human_resource_type = 4 #先考虑只有一类人
+    Human_resource_type = 4
     # 特设、航电、军械、机械
     # total_Huamn_resource = [4,5,6,8]  # 每种人员数量
 
@@ -217,7 +217,7 @@ class FixedMes(object):
             Lpk[needRtype] += HS*needNums*dur/lowTime
 
     Lpk = [int(i) for i in Lpk]
-    total_Huamn_resource = Lpk
+    total_Human_resource = Lpk
     # total_Huamn_resource = [6,9,12,15]
     # OrderInputMes = [[],
     #                  [(0, 0), (0, 0), (0, 0)],  # 虚拟1

@@ -5,9 +5,10 @@ class Station:
         self.type = info[0]
         self.zunumber = info[1]
         self.number = info[2]
-        self.state = False
+        self.working = False
         self.NowJZJ = 0
         self.NowTaskId = 0
+
 
         self.alreadyworkTime = 0
         self.OrderOver = []  # 已完成工序
