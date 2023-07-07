@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 from models.mlp import MLPActor
 from models.mlp import MLPCritic
@@ -65,5 +66,8 @@ class ActorCritic(nn.Module):
         return  v
 
 
+
+
 if __name__ == '__main__':
+
     print('Go home')

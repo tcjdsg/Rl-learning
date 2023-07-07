@@ -2,7 +2,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Arguments for ppo_jssp')
 # args for device
-parser.add_argument('--device', type=str, default="cpu", help='Number of jobs of instances')
+parser.add_argument('--device', type=str, default="cuda", help='Number of jobs of instances')
 # args for env
 parser.add_argument('--n_j', type=int, default=8, help='Number of jobs of instance')
 parser.add_argument('--n_m', type=int, default=19, help='Number of machines instance')
@@ -32,7 +32,7 @@ parser.add_argument('--lamda', type=float, default=0.99, help='GAE parameter')
 parser.add_argument('--max_updates', type=int, default=5000, help='No. of episodes of each env for training')
 parser.add_argument('--lr', type=float, default=2e-5, help='lr')
 parser.add_argument('--decayflag', type=bool, default=False, help='lr decayflag')
-parser.add_argument('--decay_step_size', type=int, default=2000, help='decay_step_size')
+parser.add_argument('--decay_step_size', type=int, default=1000, help='decay_step_size')
 parser.add_argument('--decay_ratio', type=float, default=0.9, help='decay_ratio, e.g. 0.9, 0.95')
 parser.add_argument('--gamma', type=float, default=1, help='discount factor')
 parser.add_argument('--k_epochs', type=int, default=10, help='update policy for K epochs')
@@ -40,8 +40,8 @@ parser.add_argument('--eps_clip', type=float, default=0.2, help='clip parameter 
 parser.add_argument('--vloss_coef', type=float, default=1, help='critic loss coefficient')
 parser.add_argument('--ploss_coef', type=float, default=2, help='policy loss coefficient')
 parser.add_argument('--entloss_coef', type=float, default=0.01, help='Trick 5: policy entropy')
-parser.add_argument('--set_adam_eps', type=bool, default=True, help='')
-parser.add_argument('--batch_size', type=int, default=128, help='batch')
+
+parser.add_argument('--batch_size', type=int, default=1, help='batch')
 parser.add_argument('--mini_batch_size', type=int, default=64, help='mini_batch_size')
 parser.add_argument('--use_grad_clip', type=bool, default=True, help='use_grad_clip')
 parser.add_argument("--use_lr_decay", type=bool, default=True, help="Trick 6:learning rate Decay")
@@ -54,9 +54,9 @@ parser.add_argument("--use_reward_norm", type=bool, default=False, help="Trick 3
 parser.add_argument("--use_tanh", type=float, default=False, help="Trick 10: tanh activation function")
 parser.add_argument("--use_orthogonal_init", type=bool, default=True, help="Trick 8: orthogonal initialization")
 
-parser.add_argument("--evaluate_freq", type=float, default=5e3, help="Evaluate the policy every 'evaluate_freq' steps")
+parser.add_argument("--evaluate_freq", type=float, default=500, help="Evaluate the policy every 'evaluate_freq' steps")
 parser.add_argument("--save_freq", type=int, default=20, help="Save frequency")
-parser.add_argument("--evaluate_times", type=float, default=15, help="Evaluate times")
+parser.add_argument("--evaluate_times", type=float, default=30, help="Evaluate times")
 parser.add_argument("--action_dim", type=int, default=10, help="action_dim")
 
 configs = parser.parse_args()

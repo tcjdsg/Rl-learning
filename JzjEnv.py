@@ -1,6 +1,8 @@
 import copy
 import sys
 
+import torch
+
 from JZJenv.Human import Human
 from JZJenv.Station import Station
 from JZJenv.judge import judgeStation, allocationStation, allocationHuman
@@ -17,6 +19,8 @@ from agent_utils import override
 from JZJenv.FixedMess import FixedMes
 np.seterr(divide='ignore',invalid='ignore')
 filenameDis = "dis.csv"
+
+device = torch.device(configs.device)
 class JZJ(gym.Env):
     def __init__(self,
                  planeNum,
@@ -35,9 +39,9 @@ class JZJ(gym.Env):
         self.static_activities, self.suc ,self.pre= self.Init.readData()
         calLFTandMTS(self.static_activities)
 
-        self.finished_time = [[0.0 for _ in range(self.number_of_opera)] for _ in range(self.number_of_JZJ)]
-        self.scheduled_mark = [[0 for _ in range(self.number_of_opera)] for _ in range(self.number_of_JZJ)]
-        self.can_be_scheduled_mark = [[0 for _ in range(self.number_of_opera)] for _ in range(self.number_of_JZJ)]
+        self.finished_time =torch.tensor( [[0.0 for _ in range(self.number_of_opera)] for _ in range(self.number_of_JZJ)])
+        self.scheduled_mark = torch.tensor( [[0.0 for _ in range(self.number_of_opera)] for _ in range(self.number_of_JZJ)])
+        self.can_be_scheduled_mark = torch.tensor( [[0.0 for _ in range(self.number_of_opera)] for _ in range(self.number_of_JZJ)])
         self.running_tasks = []
         self.waiting_tasks = []
         self.scheduled_tasksID = []
@@ -65,7 +69,7 @@ class JZJ(gym.Env):
         activityIndex = self.returnActivity(priority_rule)
         print("---scheduled: {}---chooseIndex:{}---choose priority rule: {}".format(len(self.partial_sol_sequeence),activityIndex, priority_rule))
 
-        self.can_be_scheduled_mark = [[0 for _ in range(self.number_of_opera)] for _ in range(self.number_of_JZJ)]
+        self.can_be_scheduled_mark = torch.tensor([[0 for _ in range(self.number_of_opera)] for _ in range(self.number_of_JZJ)])
 
         current_time = self.t
         maxend_Time = self.Cmax
@@ -93,8 +97,10 @@ class JZJ(gym.Env):
             self.activities[activityIndex].es = current_time
             self.activities[activityIndex].ef = current_time + dur_a
 
+            #分配设备和人员
             StationInfo  = allocationStation(self.activities[activityIndex], self.Stations, eligibleStation)
             allocationHuman(self.activities[activityIndex], self.Humans)
+
             # 记录设备工作状态
             if len(StationInfo) > 0:
 
@@ -168,17 +174,16 @@ class JZJ(gym.Env):
                     col = num % self.number_of_opera
                     self.can_be_scheduled_mark[row][col] = 1
 
-        if np.max(self.finished_time) == 0:
-            fea = np.array(
-                [self.finished_time, self.scheduled_mark, self.can_be_scheduled_mark])
+        if torch.max(self.finished_time) == 0:
+            fea = torch.stack((self.finished_time , self.scheduled_mark, self.can_be_scheduled_mark),dim=0)
         else:
-            fea = np.array([self.finished_time/np.max(self.finished_time), self.scheduled_mark, self.can_be_scheduled_mark])
+            fea = torch.stack((self.finished_time/torch.max(self.finished_time), self.scheduled_mark, self.can_be_scheduled_mark),dim=0)
         reward = - (maxend_Time - self.Cmax)
         if reward == 0:
             reward = configs.rewardscale
             self.posRewards += reward
         self.Cmax = maxend_Time
-        return fea, reward, self.done(), self.Cmax
+        return fea.to(device), reward, self.done(), self.Cmax
 
     def returnActivity(self, priority_rule):
         value_lists = []
@@ -274,9 +279,9 @@ class JZJ(gym.Env):
         self.activities = self.static_activities
         self.finished_mark = [[0 for _ in range(self.number_of_opera)] for _ in range(self.number_of_JZJ)]
 
-        self.finished_time = [[0.0 for _ in range(self.number_of_opera)] for _ in range(self.number_of_JZJ)]
-        self.scheduled_mark = [[0 for _ in range(self.number_of_opera)] for _ in range(self.number_of_JZJ)]
-        self.can_be_scheduled_mark = [[0 for _ in range(self.number_of_opera)] for _ in range(self.number_of_JZJ)]
+        self.finished_time =torch.tensor([[0.0 for _ in range(self.number_of_opera)] for _ in range(self.number_of_JZJ)])
+        self.scheduled_mark = torch.tensor([[0 for _ in range(self.number_of_opera)] for _ in range(self.number_of_JZJ)])
+        self.can_be_scheduled_mark = torch.tensor([[0 for _ in range(self.number_of_opera)] for _ in range(self.number_of_JZJ)])
 
         self.running_tasks = []
         self.end_Time = []
@@ -292,8 +297,9 @@ class JZJ(gym.Env):
         self.initQuality=0
         self.Cmax = 0
         self.current_consumption = [0 for _ in range(len(FixedMes.total_Human_resource))]
-        fea = np.array(
-            [self.finished_time , self.scheduled_mark, self.can_be_scheduled_mark])
+
+        fea = torch.stack((self.finished_time , self.scheduled_mark, self.can_be_scheduled_mark),dim=0)
+
         #allltasks,current_consumption,running,allNums,finished
         self.eligible = conditionUpdateAndCheck(self.static_activities,
                                                 self.current_consumption,
@@ -301,7 +307,7 @@ class JZJ(gym.Env):
                                                 self.partial_sol_sequeence,
                                                 self.recordStation)
 
-        return fea
+        return fea.to(device)
 
 if __name__ == '__main__':
     env = JZJ(configs.n_j, configs.n_m)

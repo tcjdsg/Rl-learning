@@ -12,7 +12,7 @@ from torch.utils.tensorboard import SummaryWriter
 from Params import configs
 # from validation import validate
 
-from replaybuffer import ReplayBuffer
+from replaybuffer import ReplayBuffer, Memory
 
 device = torch.device(configs.device)
 
@@ -25,6 +25,9 @@ class Runner:
         self.seed = seed
         self.number = number
         self.episodeNum =0
+
+        self.lamda = configs.lamda
+        self.use_adv_norm = configs.use_adv_norm
         # Create env
         self.env = JZJ(configs.n_j, configs.n_m)
 
@@ -36,7 +39,7 @@ class Runner:
   # Maximum number of steps per episode
         print("envJZJ={}".format(configs.n_j))
         print("episode_limit={}".format(configs.n_j*configs.n_m))
-        self.replay_buffer = ReplayBuffer(configs)
+        self.replay_buffer = Memory()
 
         self.episode_limit = configs.n_j*configs.n_m
 
@@ -70,21 +73,22 @@ class Runner:
             self.reward_scaling = RewardScaling(shape=1, gamma=self.args.gamma)
 
     def run(self, ):
-        evaluate_num = -1  # Record the number of evaluations
+        evaluate_num =-1  # Record the number of evaluations
         while self.episodeNum < self.args.max_updates:
-            if self.total_steps // self.args.evaluate_freq > evaluate_num:
+            if self.episodeNum // self.args.evaluate_freq > evaluate_num:
                 print("Evaluate the policy every 'evaluate_freq' steps")
                 self.evaluate_policy()  # Evaluate the policy every 'evaluate_freq' steps
                 evaluate_num += 1
                 
             print("------------one episode-------------")
-            _, episode_steps = self.run_episode()  # Run an episode
+            episode_reward = self.run_episode()  # Run an episode
             self.episodeNum+=1
-            self.total_steps += episode_steps
 
-            if self.replay_buffer.episode_num == self.args.batch_size:
-                self.agent.update(self.replay_buffer, self.total_steps)  # Training
-                self.replay_buffer.reset_buffer()
+            loss, v_loss =self.agent.update(self.replay_buffer)  # Training
+            self.replay_buffer.clear()
+
+            print('Episode {}\t Last reward: {:.2f}\t Mean_Vloss: {:.8f}'.format(
+                self.episodeNum + 1, episode_reward, v_loss))
 
         self.evaluate_policy()
         self.env.close()
@@ -109,7 +113,7 @@ class Runner:
             if self.args.use_reward_scaling:
                 r = self.reward_scaling(r)
             # Store the transition
-            self.replay_buffer.store_transition(episode_step, s, v, a, a_logprob, r, dw)
+            self.replay_buffer.push(s, v, a, a_logprob, torch.tensor(r), done)
             s = s_
             if done:
                 break
@@ -117,8 +121,9 @@ class Runner:
         if self.args.use_state_norm:
             s = self.state_norm(s)
         v = self.agent.get_value(s)
-        self.replay_buffer.store_last_value(episode_step + 1, v)
-        return episode_reward, episode_step + 1
+
+        return episode_reward
+
     def evaluate_policy(self, ):
         evaluate_reward = 0
         for _ in range(self.args.evaluate_times):

@@ -32,7 +32,7 @@ class ConvBlock(nn.Module):
         x = self.relu(x)
         return x
 
-
+device = torch.device(configs.device)
 class cnnNet(nn.Module):
     def __init__(self, input_dim, hidden_dims, hidden_dim,kernel):
         super(cnnNet, self).__init__()
@@ -42,9 +42,9 @@ class cnnNet(nn.Module):
         self.conv_1 = nn.Conv2d(input_dim, hidden_dims[0], kernel[0], stride=1)
         self.conv_2 = nn.Conv2d(hidden_dims[0], hidden_dims[1], kernel[1], stride=1)
         self.conv_3 = nn.Conv2d(hidden_dims[1], hidden_dims[2], kernel[2], stride=1)
-        self.bn_1 = nn.BatchNorm2d(hidden_dims[0])
-        self.bn_2 = nn.BatchNorm2d(hidden_dims[1])
-        self.bn_3 = nn.BatchNorm2d(hidden_dims[2])
+        self.bn_1 = nn.BatchNorm2d(hidden_dims[0]).to(device)
+        self.bn_2 = nn.BatchNorm2d(hidden_dims[1]).to(device)
+        self.bn_3 = nn.BatchNorm2d(hidden_dims[2]).to(device)
 
         self.activate_func = [nn.ReLU(), nn.Tanh()][0]  # Trick10: use tanh
 
@@ -60,16 +60,16 @@ class cnnNet(nn.Module):
         self.conv_3.weight.data.normal_(0, math.sqrt(2. / n3))
 
         self.cnn = nn.Sequential(
-            self.conv_1, self.bn_1, self.activate_func,  # ,
+            self.conv_1, self.bn_1, self.activate_func , # ,
             self.conv_2, self.bn_2, self.activate_func,
             self.conv_3, self.bn_3, self.activate_func
-        )
+        ).to(device)
 
         # check the output of cnn, which is [fc1_dims]
-        self.fcn_inputs_length = self.cnn_out_dim([input_dim,configs.n_j,configs.n_m])
+        self.fcn_inputs_length = self.cnn_out_dim(torch.tensor([input_dim,configs.n_j,configs.n_m]))
 
         # fully connected layers
-        self.fc1 = nn.Linear(self.fcn_inputs_length, hidden_dim)
+        self.fc1 = nn.Linear(self.fcn_inputs_length, hidden_dim).to(device)
 
         self.fc1.weight.data.normal_(0, 0.1)
 
@@ -89,5 +89,26 @@ class cnnNet(nn.Module):
         return fea_State
 
     def cnn_out_dim(self, input_dims):
-        return self.cnn(torch.zeros(1, *input_dims)
+        return self.cnn(torch.zeros(1, *input_dims).to(device)
                         ).flatten().shape[0]
+
+
+if __name__ == '__main__':
+    # def cal_gpu(module):
+    #     if isinstance(module, torch.nn.DataParallel):
+    #         module = module.module
+    #     for submodule in module.children():
+    #         if hasattr(submodule, "_parameters"):
+    #             parameters = submodule._parameters
+    #             if "weight" in parameters:
+    #                 return parameters["weight"].device
+    # feature_extract = cnnNet( 2, [3,6,9], 1, [1,1,1]).to(device)
+    # print(cal_gpu(feature_extract.cnn))
+    a = torch.tensor(
+        [[0.0, 0.0, 0.0, 0.0]])
+    b = torch.tensor(
+        [[0.0, 0.0, 0.0, 0.0]])
+    c = []
+    c = torch.stack((a,b),dim=0)
+    c = torch.stack((c,b),dim=0)
+    print(c)

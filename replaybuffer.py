@@ -2,30 +2,40 @@ import torch
 import numpy as np
 import copy
 
-# parser.add_argument('--input_dim', type=int, default=2, help='number of dimension of raw node features')
-# parser.add_argument('--hidden_dim', type=int, default=64, help='hidden dim of MLP in fea extract GNN')
-# parser.add_argument('--num_mlp_layers_feature_extract', type=int, default=2, help='No. of layers of MLP in fea extract GNN')
-# parser.add_argument('--num_mlp_layers_actor', type=int, default=2, help='No. of layers in actor MLP')
-# parser.add_argument('--hidden_dim_actor', type=int, default=32, help='hidden dim of MLP in actor')
-# parser.add_argument('--num_mlp_layers_critic', type=int, default=2, help='No. of layers in critic MLP')
-# parser.add_argument('--hidden_dim_critic', type=int, default=32, help='hidden dim of MLP in critic')
-# # args for PPO
-# parser.add_argument('--num_envs', type=int, default=4, help='No. of envs for training')
-# parser.add_argument('--max_updates', type=int, default=10000, help='No. of episodes of each env for training')
-# parser.add_argument('--lr', type=float, default=2e-5, help='lr')
-# parser.add_argument('--decayflag', type=bool, default=False, help='lr decayflag')
-# parser.add_argument('--decay_step_size', type=int, default=2000, help='decay_step_size')
-# parser.add_argument('--decay_ratio', type=float, default=0.9, help='decay_ratio, e.g. 0.9, 0.95')
-# parser.add_argument('--gamma', type=float, default=1, help='discount factor')
-# parser.add_argument('--k_epochs', type=int, default=1, help='update policy for K epochs')
-# parser.add_argument('--eps_clip', type=float, default=0.2, help='clip parameter for PPO')
-# parser.add_argument('--vloss_coef', type=float, default=1, help='critic loss coefficient')
-# parser.add_argument('--ploss_coef', type=float, default=2, help='policy loss coefficient')
-# parser.add_argument('--entloss_coef', type=float, default=0.01, help='entropy loss coefficient')
-# parser.add_argument('--set_adam_eps', type=bool, default=True, help='')
-# parser.add_argument('--batch_size', type=int, default=64, help='batch')
-# parser.add_argument('--mini_batch_size', type=int, default=32, help='mini_batch_size')
-# parser.add_argument('--use_grad_clip', type=bool, default=True, help='use_grad_clip')
+class Memory:
+    def __init__(self):
+        self.s = []
+        self.v = []
+        self.a = []
+        self.a_logprob = []
+        self.r = []
+        self.dw = []
+
+
+
+
+
+    def sample(self):
+        return torch.cat(self.s,dim=0), torch.cat(self.a,dim=0),  torch.cat(self.a_logprob,dim=0),torch.cat(self.v,dim=0),torch.cat(self.r,dim=0), torch.cat(self.dw,dim=0)
+
+
+    def push(self, state, vals, action, probs,  reward, done):
+        self.s.append(torch.unsqueeze(state,0))
+        self.a.append(torch.unsqueeze(torch.tensor(action),0))
+        self.a_logprob.append(torch.unsqueeze(torch.tensor(probs),0))
+        self.v.append(torch.unsqueeze(torch.tensor(vals),0))
+        self.r.append(torch.unsqueeze(reward,0))
+        self.dw.append(torch.unsqueeze(torch.tensor(done),0))
+
+
+    def clear(self):
+        self.s = []
+        self.v = []
+        self.a = []
+        self.a_logprob = []
+        self.r = []
+        self.dw = []
+
 
 class ReplayBuffer:
     def __init__(self, args):
@@ -45,29 +55,30 @@ class ReplayBuffer:
         self.reset_buffer()
 
     def reset_buffer(self):
-        self.buffer = {'s': np.zeros([self.batch_size, self.episode_limit, self.input_dim,self.jzjN,self.taskN]),
-                       'v': np.zeros([self.batch_size, self.episode_limit + 1]),
-                       'a': np.zeros([self.batch_size, self.episode_limit]),
-                       'a_logprob': np.zeros([self.batch_size, self.episode_limit]),
-                       'r': np.zeros([self.batch_size, self.episode_limit]),
-                       'dw': np.ones([self.batch_size, self.episode_limit]),  # Note: We use 'np.ones' to initialize 'dw'
-                       'active': np.zeros([self.batch_size, self.episode_limit])
+        self.buffer = {'s': torch.zeros([self.batch_size, self.input_dim,self.jzjN,self.taskN]),
+                       'v': torch.zeros([self.batch_size, 1]),
+                       'a': torch.zeros([self.batch_size, 1]),
+                       'a_logprob': torch.zeros([self.batch_size, 1]),
+                       'r': torch.zeros([self.batch_size, 1]),
+                       'dw': torch.ones([self.batch_size, 1]),  # Note: We use 'np.ones' to initialize 'dw'
+                       'active': torch.zeros([self.batch_size, 1])
                        }
+
         self.episode_num = 0
         self.max_episode_len = 0
 
     def store_transition(self, episode_step, s, v, a, a_logprob, r, dw):
-        self.buffer['s'][self.episode_num][episode_step] = s
-        self.buffer['v'][self.episode_num][episode_step] = v
-        self.buffer['a'][self.episode_num][episode_step] = a
-        self.buffer['a_logprob'][self.episode_num][episode_step] = a_logprob
-        self.buffer['r'][self.episode_num][episode_step] = r
-        self.buffer['dw'][self.episode_num][episode_step] = dw
+        self.buffer['s'][self.episode_num] = s
+        self.buffer['v'][self.episode_num] = v
+        self.buffer['a'][self.episode_num] = a
+        self.buffer['a_logprob'][self.episode_num] = a_logprob
+        self.buffer['r'][self.episode_num] = r
+        self.buffer['dw'][self.episode_num]= dw
 
-        self.buffer['active'][self.episode_num][episode_step] = 1.0
+        self.buffer['active'][self.episode_num] = 1.0
 
     def store_last_value(self, episode_step, v):
-        self.buffer['v'][self.episode_num][episode_step] = v
+        self.buffer['v'][self.episode_num] = v
         self.episode_num += 1
         # Record max_episode_len
         if episode_step > self.max_episode_len:
@@ -80,7 +91,7 @@ class ReplayBuffer:
         r = self.buffer['r'][:, :self.max_episode_len]
         dw = self.buffer['dw'][:, :self.max_episode_len]
         active = self.buffer['active'][:, :self.max_episode_len]
-        adv = np.zeros_like(r)  # adv.shape=(batch_size,max_episode_len)
+        adv = torch.zeros_like(r)  # adv.shape=(batch_size,max_episode_len)
         gae = 0
         with torch.no_grad():  # adv and v_target have no gradient
             # deltas.shape=(batch_size,max_episode_len)
@@ -91,8 +102,8 @@ class ReplayBuffer:
             v_target = adv + v  # v_target.shape(batch_size,max_episode_len)
             if self.use_adv_norm:  # Trick 1:advantage normalization
                 adv_copy = copy.deepcopy(adv)
-                adv_copy[active == 0] = np.nan  # 忽略掉active=0的那些adv
-                adv = ((adv - np.nanmean(adv_copy)) / (np.nanstd(adv_copy) + 1e-5))
+                adv_copy[active == 0] = torch.nan  # 忽略掉active=0的那些adv
+                adv = ((adv - torch.nanmean(adv_copy)) / (torch.std(adv_copy) + 1e-5))
         return adv, v_target
 
     def get_training_data(self):
