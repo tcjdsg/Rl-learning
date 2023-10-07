@@ -29,10 +29,10 @@ parser.add_argument('--hidden_dim_critic', type=int, default=32, help='hidden di
 # args for PPO
 parser.add_argument('--num_envs', type=int, default=4, help='No. of envs for training')
 parser.add_argument('--lamda', type=float, default=0.99, help='GAE parameter')
-parser.add_argument('--max_updates', type=int, default=5000, help='No. of episodes of each env for training')
+parser.add_argument('--max_updates', type=int, default=500, help='No. of episodes of each env for training')
 parser.add_argument('--lr', type=float, default=2e-5, help='lr')
 parser.add_argument('--decayflag', type=bool, default=False, help='lr decayflag')
-parser.add_argument('--decay_step_size', type=int, default=1000, help='decay_step_size')
+parser.add_argument('--decay_step_size', type=int, default=100, help='decay_step_size')
 parser.add_argument('--decay_ratio', type=float, default=0.9, help='decay_ratio, e.g. 0.9, 0.95')
 parser.add_argument('--gamma', type=float, default=1, help='discount factor')
 parser.add_argument('--k_epochs', type=int, default=10, help='update policy for K epochs')
@@ -54,7 +54,7 @@ parser.add_argument("--use_reward_norm", type=bool, default=False, help="Trick 3
 parser.add_argument("--use_tanh", type=float, default=False, help="Trick 10: tanh activation function")
 parser.add_argument("--use_orthogonal_init", type=bool, default=True, help="Trick 8: orthogonal initialization")
 
-parser.add_argument("--evaluate_freq", type=float, default=500, help="Evaluate the policy every 'evaluate_freq' steps")
+parser.add_argument("--evaluate_freq", type=float, default=100, help="Evaluate the policy every 'evaluate_freq' steps")
 parser.add_argument("--save_freq", type=int, default=20, help="Save frequency")
 parser.add_argument("--evaluate_times", type=float, default=30, help="Evaluate times")
 parser.add_argument("--action_dim", type=int, default=10, help="action_dim")
