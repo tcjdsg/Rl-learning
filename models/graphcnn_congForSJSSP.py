@@ -1,5 +1,3 @@
-import math
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -18,7 +16,7 @@ class Attention(nn.Module):
         feas_final = torch.cat((g_fea, representation_weighted), dim=1)
         return feas_final
 '''
-# 定义网络结构
+
 
 class GraphCNN(nn.Module):
     def __init__(self,
@@ -56,7 +54,7 @@ class GraphCNN(nn.Module):
 
         # List of MLPs
         self.mlps = torch.nn.ModuleList()
-
+        self.bn = torch.nn.BatchNorm1d(input_dim)
         # List of batchnorms applied to the output of MLP (input of the final prediction linear layer)
         self.batch_norms = torch.nn.ModuleList()
 
@@ -107,6 +105,7 @@ class GraphCNN(nn.Module):
                 degree = torch.mm(Adj_block, torch.ones((Adj_block.shape[0], 1)).to(self.device))
                 pooled = pooled/degree
         # representation of neighboring and center nodes
+
         pooled_rep = self.mlps[layer](pooled)
         h = self.batch_norms[layer](pooled_rep)
 
@@ -142,8 +141,9 @@ class GraphCNN(nn.Module):
                 h = self.next_layer(h, layer, Adj_block=Adj_block)
 
         h_nodes = h.clone()
-        # print(graph_pool.shape, h.shape)
+       # print(graph_pool.shape, h.shape)
         pooled_h = torch.sparse.mm(graph_pool, h)
+
         # pooled_h = graph_pool.spmm(h)
 
         return pooled_h, h_nodes

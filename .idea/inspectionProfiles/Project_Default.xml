@@ -1,10 +1,32 @@
 <component name="InspectionProjectProfileManager">
   <profile version="1.0">
     <option name="myName" value="Project Default" />
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <value>
+          <list size="8">
+            <item index="0" class="java.lang.String" itemvalue="scoop" />
+            <item index="1" class="java.lang.String" itemvalue="lmfit" />
+            <item index="2" class="java.lang.String" itemvalue="progressbar" />
+            <item index="3" class="java.lang.String" itemvalue="pymc" />
+            <item index="4" class="java.lang.String" itemvalue="enum34" />
+            <item index="5" class="java.lang.String" itemvalue="argparse" />
+            <item index="6" class="java.lang.String" itemvalue="deap" />
+            <item index="7" class="java.lang.String" itemvalue="minibar" />
+          </list>
+        </value>
+      </option>
+    </inspection_tool>
     <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="ignoredIdentifiers">
         <list>
-          <option value="Polygon" />
+          <option value="object.__getitem__" />
+          <option value="int.belong_plane_id" />
+          <option value="util.CPM" />
+          <option value="bool.any" />
+          <option value="JZJ.JZJenv.FixedMess.FixedMes.__getitem__" />
+          <option value="list.__floordiv__" />
+          <option value="list.__truediv__" />
         </list>
       </option>
     </inspection_tool>

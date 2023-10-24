@@ -1,5 +1,6 @@
 import copy
 
+from JZJ_PPO.JZJenv.FixedMess import FixedMes
 from utils import *
 
 
@@ -14,21 +15,34 @@ def dfsLFT(SucOrder, i):
     if len(SucOrder[i].successor) == 0:
         SucOrder[i].lf = FixedMes.lowTime
         return FixedMes.lowTime
-
     time = 999
     for Orderid in SucOrder[i].successor:
-        time = min(time,dfsLFT(SucOrder,Orderid)-SucOrder[Orderid].duration)
+        time = min(time, dfsLFT(SucOrder, Orderid) - SucOrder[Orderid].duration)
     SucOrder[i].lf = time
     SucOrder[i].ls = time - SucOrder[i].duration
     return time
 
-def dfsMTS(SucOrder,i):
-    if len(SucOrder[i].successor)==0:
-        return [SucOrder[i].id]
+def dfsEF(activities, i, LB):
+    if len(activities[i].precessor) == 0:
+        activities[i].es = 0
+        activities[i].ef = 0
+        LB.append(0)
+        return 0
+    time = 0
+    for Orderid in activities[i].pre:
+        time = max(time, dfsEF(activities, Orderid, LB))
+    if ~activities[i].scheduled:
+        activities[i].es = time
+        activities[i].ef = time + activities[i].duration
+    LB.append(activities[i].ef)
+    return activities[i].ef
 
+def dfsMTS(SucOrder,i):
+    if len(SucOrder[i].successor) == 0:
+        return [SucOrder[i].id]
     record = copy.deepcopy(SucOrder[i].successor)
     for Orderid in SucOrder[i].successor:
-        record = list(set(record + dfsMTS(SucOrder,Orderid)))
+        record = list(set(record + dfsMTS(SucOrder, Orderid)))
 
     SucOrder[i].mts = len(record)
     return record
@@ -43,7 +57,6 @@ def calculate_grpw(SucOrder):
         for j in SucOrder[i].successor:
             SucOrder[i].grpw += SucOrder[j].duration
 
-
 def calculate_grd(SucOrder):
     for i in range(FixedMes.Activity_num):
         jzjId = SucOrder[i].belong_plane_id
@@ -55,6 +68,7 @@ def calculate_grd(SucOrder):
 def calculate_dynamic_priority_rules(alltasks,eligible, current_time, current_consumption, active_list):
         """
             Calculates IRSM, WCS, ACS priority values
+
 
             Parameters:
                 eligible: eligible set of jobs based on both precedence and resource constraints
@@ -72,7 +86,7 @@ def calculate_dynamic_priority_rules(alltasks,eligible, current_time, current_co
                     irsm_val = max(
                         earliest_start(alltasks,j, i, current_time, current_consumption, active_list) -
                         alltasks[i].ls, irsm_val)
-                    curr_e_val =earliest_start(alltasks,i, j, current_time, current_consumption, active_list)
+                    curr_e_val = earliest_start(alltasks,i, j, current_time, current_consumption, active_list)
                     max_e_val = max(curr_e_val, max_e_val)
                     sum_e_vals += curr_e_val
             alltasks[j].irsm = irsm_val
@@ -122,3 +136,5 @@ def isCSP(alltasks, i, j, current_consumption):
         new_consumption = add_lists(alltasks[i].resourceRequestH, alltasks[j].resourceRequestH)
         new_consumption = add_lists(new_consumption, current_consumption)
         return less_than(new_consumption, FixedMes.total_Human_resource)
+
+

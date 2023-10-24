@@ -1,6 +1,6 @@
 import copy
 
-from JZJenv.FixedMess import FixedMes
+from JZJ_PPO.JZJenv.FixedMess import FixedMes
 
 
 class Human:

@@ -100,9 +100,7 @@ class MLPActor(nn.Module):
                 '''
                 h = torch.tanh(self.linears[layer](h))
                 # h = F.relu(self.linears[layer](h))
-                h_priority =self.linears[self.num_layers - 1](h)
-                priority = F.softmax(h_priority, dim=1)
-            return priority
+            return self.linears[self.num_layers - 1](h)
 
 
 class MLPCritic(nn.Module):

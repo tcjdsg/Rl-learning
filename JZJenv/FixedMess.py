@@ -27,7 +27,7 @@ class FixedMes(object):
     total_space_resource = [1 for i in range(planeNum)]
     Human_resource_type = 4
     # 特设、航电、军械、机械
-    # total_Huamn_resource = [4,5,6,8]  # 每种人员数量
+    total_Huamn_resource = [4,5,6,8]  # 每种人员数量
 
     # total_Huamn_resource = [30]
     constraintOrder = defaultdict(lambda: []) #记录每类人的可作用工序，和可作用舰载机范围
@@ -98,9 +98,10 @@ class FixedMes(object):
                           ]
 
     Activity_num  = (planeOrderNum)*planeNum #活动数量
+
     #工序顺序
     SUCOrder = defaultdict(lambda: [])
-    SUCOrder[0] = [1,3,5,8,9,10,11,12,13]
+    SUCOrder[0] = [1, 3, 5, 8, 9, 10, 11, 12, 13]
     SUCOrder[1] = [2]
     SUCOrder[2] = [14]
     SUCOrder[3] = [4]
@@ -114,12 +115,35 @@ class FixedMes(object):
     SUCOrder[11] = [14]
     SUCOrder[12] = [17]
     SUCOrder[13] = [17]
-    SUCOrder[14] = [15,16]
+    SUCOrder[14] = [15, 16]
     SUCOrder[15] = [17]
     SUCOrder[16] = [17]
     SUCOrder[17] = [18]
     SUCOrder[18] = []
-   #特设 航电 机械 军械
+
+    #工序顺序
+    PREOrder = defaultdict(lambda: [])
+    PREOrder[0] = []
+    PREOrder[1] = [0]
+    PREOrder[2] = [1]
+    PREOrder[3] = [0]
+    PREOrder[4] = [3]
+    PREOrder[5] = [0]
+    PREOrder[6] = [5]
+    PREOrder[7] = [6]
+    PREOrder[8] = [0]
+    PREOrder[9] = [0]
+    PREOrder[10] = [0]
+    PREOrder[11] = [0]
+    PREOrder[12] = [0]
+    PREOrder[13] = [0]
+    PREOrder[14] = [2, 4, 7, 8, 9, 11, 12]
+    PREOrder[15] = [14]
+    PREOrder[16] = [14]
+    PREOrder[17] = [15, 16, 10, 12, 13]
+    PREOrder[18] = [17]
+
+    #特设 航电 机械 军械
     OrderInputMes = [
                      [(0, 0), (0, 0), (0, 0)],  # 虚拟1
                      [(0, 1), (0, 0), (0, 0)],  # 2
@@ -185,27 +209,7 @@ class FixedMes(object):
                  7, # 18 惯导
                  0 # 19
                  ]
-    # OrderTime = [0,
-    #              0,  # 虚拟1
-    #              3,  # 2 特设外观检查
-    #              6,  # 3 特设座舱检查
-    #              3,  # 4 航电外观检查
-    #              6,  # 5 航电座舱检查
-    #              5,  # 6 充氧
-    #              4,  # 7 加油
-    #              5,  # 8 军械外观检查
-    #              13,  # 9 军械座舱检查
-    #              4,  # 10 机械座舱检查
-    #              4,  # 11 充氮
-    #              3,  # 12 机械外观检查
-    #              12,  # 13 发动机检查
-    #              8,  # 14 机翼展开
-    #              3,  # 15 挂弹
-    #              8,  # 16 挂弹
-    #              10,  # 17 收机翼
-    #              7, # 18 惯导
-    #              0 # 19
-    #              ]
+
     lowTime = 120  # 不能超过90 min
     HS = 3
     Lpk = [0 for _ in range(Human_resource_type)]
@@ -218,31 +222,6 @@ class FixedMes(object):
 
     Lpk = [int(i) for i in Lpk]
     total_Human_resource = Lpk
-    # total_Huamn_resource = [6,9,12,15]
-    # OrderInputMes = [[],
-    #                  [(0, 0), (0, 0), (0, 0)],  # 虚拟1
-    #                  [(0, 1), (0, 0), (0, 0)],  # 2
-    #                  [(0, 1), (1, 1), (0, 1)],  # 3
-    #                  [(0, 1), (0, 0), (0, 0)],  # 4
-    #                  [(0, 1), (1, 1), (0, 0)],  # 5
-    #                  [(0, 1), (0, 0), (0, 0)],  # 6
-    #                  [(0, 2), (1, 1), (0, 1)],  # 7
-    #                  [(0, 2), (0, 0), (0, 0)],  # 8,
-    #                  [(0, 1), (0, 1), (0, 1)],  # 9
-    #                  [(0, 1), (4, 1), (0, 0)],  # 10
-    #                  [(0, 1), (3, 1), (0, 0)],  # 11
-    #                  [(0, 2), (1, 1), (0, 1)],  # 12
-    #                  [(0, 1), (0, 0), (0, 0)],  # 13
-    #                  [(0, 1), (0, 0), (0, 1)],  # 14
-    #                  [(0, 1), (2, 1), (0, 0)],  # 15
-    #                  [(0, 1), (0, 0), (0, 0)],  # 16
-    #                  [(0, 1), (0, 0), (0, 0)],  # 17
-    #                  [(0, 2), (0, 0), (0, 0)],  # 18
-    #                  [(0, 0), (0, 0), (0, 0)]  # 19
-    #                  ]
-
-
-    #17位 为了让虚拟从1开始
     sigma = 0.3
     shedule_num=0
     act_info={}
@@ -259,8 +238,6 @@ class FixedMes(object):
 
     populationnumber = 40
     ge = 100
-
-
     threadNum = 1
     populationnumberson = populationnumber
 
@@ -310,24 +287,8 @@ class FixedMes(object):
     targetWeight =[1,0.3,0.1]
     boundUpper =[0,0]
     boundLowwer=[]
-
-
-
-
-
     AON=[]
 
-
-    # import scipy.stats as stats
-    # mu, sigma = 5, 0.7
-    # lower, upper = mu - 2 * sigma, mu + 2 * sigma  # 截断在[μ-2σ, μ+2σ]
-    # X = stats.truncnorm((lower - mu) / sigma, (upper - mu) / sigma, loc=mu, scale=sigma)
-    # print(X.rvs())
-    # print(X.rvs())
-    #
-    # x=FixedMes()
-    # x.my()
-    # print()
 
 
 

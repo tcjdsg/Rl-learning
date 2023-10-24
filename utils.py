@@ -1,10 +1,13 @@
-import math
-
 import scipy.stats as stats
-import torch
 
-from JZJenv.FixedMess import FixedMes
+# [1,1],[1,2],[1,3],[1,4]..[2,2],[2,3],[2,4],..
+def HumanActions(number_humans):
+    actions = []
+    for cur in range(0, number_humans):
+        for i in range(cur, number_humans):
+            actions.append([cur, i])
 
+    return actions
 
 def add_lists(l1, l2):
     return [sum(x) for x in zip(l1, l2)]
@@ -19,6 +22,7 @@ def less_than(l1, l2):
         if (l1[i] > l2[i]):
             return False
     return True
+
 def find_index(index_list,value_list,stat='min'):
     #Function to find the index from index list whose value in value list is minimum or maximum
     if(stat=='min'):
@@ -58,52 +62,93 @@ def getTime(j, i):
         X = random.uniform(lower, upper)
         return X
 
-    # 定义每种任务的时间分布
+    # # 定义每种任务的时间分布
+    # if i == 0:
+    #     return 0
+    # elif i == 1:
+    #     return truncnorm(FixedMes.OrderTime[1])
+    # elif i == 2:
+    #     return truncnorm(FixedMes.OrderTime[2])
+    # elif i == 3:
+    #     return truncnorm(FixedMes.OrderTime[3])
+    # elif i == 4:
+    #     return truncnorm(FixedMes.OrderTime[4])
+    # elif i == 5:
+    #     return truncnorm(FixedMes.OrderTime[5])
+    # elif i == 6:
+    #     return truncnorm(FixedMes.OrderTime[6])
+    # elif i == 7:
+    #     return truncnorm(FixedMes.OrderTime[7])
+    #
+    # elif i == 8:
+    #     return truncnorm(FixedMes.OrderTime[8])
+    # elif i == 9:
+    #     return truncnorm(FixedMes.OrderTime[9])
+    #
+    # elif i == 10:
+    #     return truncnorm(FixedMes.OrderTime[10])
+    # elif i == 11:
+    #     return truncnorm(FixedMes.OrderTime[11])
+    #
+    # elif i == 12:
+    #     return truncnorm(FixedMes.OrderTime[12])
+    # elif i == 13:
+    #     return truncnorm(FixedMes.OrderTime[13])
+    # elif i == 14:
+    #     return truncnorm(FixedMes.OrderTime[14])
+    #
+    # elif i == 15:
+    #     return truncnorm(FixedMes.OrderTime[15])
+    # elif i == 16:
+    #     return truncnorm(FixedMes.OrderTime[16])
+    # elif i == 17:
+    #     return truncnorm(FixedMes.OrderTime[17])
+    #
+    # elif i == 18:
+    #     return 0
 
+        # 定义每种任务的时间分布
     if i == 0:
-        return 0
-
+            return 0
     elif i == 1:
-        return truncnorm(FixedMes.OrderTime[1])
+            return random.uniform(2, 6)
     elif i == 2:
-        return truncnorm(FixedMes.OrderTime[2])
+            return random.uniform(6, 10)
     elif i == 3:
-        return truncnorm(FixedMes.OrderTime[3])
+            return random.uniform(3, 6)
     elif i == 4:
-        return truncnorm(FixedMes.OrderTime[4])
+            return random.uniform(4, 9)
     elif i == 5:
-        return truncnorm(FixedMes.OrderTime[5])
+            return random.uniform(6, 10)
     elif i == 6:
-        return truncnorm(FixedMes.OrderTime[6])
+            return random.uniform(4, 8)
     elif i == 7:
-        return truncnorm(FixedMes.OrderTime[7])
-
+            return random.uniform(5, 12)
     elif i == 8:
-        return truncnorm(FixedMes.OrderTime[8])
+            return random.uniform(6, 10)
     elif i == 9:
-        return truncnorm(FixedMes.OrderTime[9])
-
+            return random.uniform(4, 8)
     elif i == 10:
-        return truncnorm(FixedMes.OrderTime[10])
+            return random.uniform(2, 6)
     elif i == 11:
-        return truncnorm(FixedMes.OrderTime[11])
-
+            return random.uniform(2, 6)
     elif i == 12:
-        return truncnorm(FixedMes.OrderTime[12])
+            return random.uniform(10, 16)
     elif i == 13:
-        return truncnorm(FixedMes.OrderTime[13])
+            return random.uniform(6, 10)
     elif i == 14:
-        return truncnorm(FixedMes.OrderTime[14])
+            return random.uniform(3, 5)
 
     elif i == 15:
-        return truncnorm(FixedMes.OrderTime[15])
+            return random.uniform(5, 9)
     elif i == 16:
-        return truncnorm(FixedMes.OrderTime[16])
+            return random.uniform(3, 5)
     elif i == 17:
-        return truncnorm(FixedMes.OrderTime[17])
-
+            return random.uniform(4, 8)
     elif i == 18:
-        return 0
+            return 0
+
+
 import numpy as np
 
 

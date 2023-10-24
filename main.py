@@ -30,6 +30,8 @@ class Runner:
         self.use_adv_norm = configs.use_adv_norm
         # Create env
         self.env = JZJ(configs.n_j, configs.n_m)
+        self.record = 100000
+
 
         # Set random seed
         np.random.seed(self.seed)
@@ -140,6 +142,12 @@ class Runner:
             evaluate_reward += episode_reward
         evaluate_reward = evaluate_reward / self.args.evaluate_times
         self.evaluate_rewards.append(evaluate_reward)
+
+        if (0-evaluate_reward) < self.record:
+            torch.save(self.agent.policy.state_dict(), './save/{}.pth'.format(
+                str(configs.n_j) + '_' + str(configs.n_m) + '_' ))
+            self.record = (0-evaluate_reward)
+        print('The validation quality is:', evaluate_reward)
         print("total_steps:{} \t evaluate_reward:{}".format(self.total_steps, evaluate_reward))
         self.writer.add_scalar('evaluate_step_rewards_{}'.format(configs.n_j), evaluate_reward,
                                global_step=self.total_steps)

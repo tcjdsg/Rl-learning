@@ -35,7 +35,12 @@ class InitM(object):
         5.所有活动的ID，持续时间，资源需求，紧前活动
         :param fileName:
         :return: activities:这个是标准单机流程
+
+
+        搞个随机的时间和工序数量
         '''
+
+
         # f = open(self.filename2)
         # jzjnums = f.readline().split(' ')
         # jzjNumbers = [ int(jzjnums[i]) for i in range(len(jzjnums))]

@@ -130,3 +130,4 @@ def allocationHuman(task, Humans):
                 record.remove(record[0])
                 need-=1
 
+

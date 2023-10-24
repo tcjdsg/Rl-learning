@@ -26,8 +26,8 @@ def conditionUpdateAndCheck(allltasks,current_consumption,finished,partitial,rec
     # 满足紧前工序已结束的工序中满足资源约束的工序
     eligible = []
 
-    for i in range(FixedMes.Activity_num):
-        if i in partitial or i in finished:
+    for i in range(len(allltasks)):
+        if i in partitial or i in finished or allltasks[i].exist == True:
             continue
 
         flag = True
