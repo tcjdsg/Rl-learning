@@ -23,15 +23,25 @@ def getData(n_jzj, n_order, n_human, seed=None):
             continue
         t = getTime(j % n_order)
         time[j] = t
+    preActDict = defaultdict(lambda: [])
     sucActDict = defaultdict(lambda: [])
     index = 0
     # 构建任务网络
     for i in range(n_jzj):
         for j in range(n_order):
             SUCOrder = [num + n_order * i for num in FixedMes.SUCOrder[j]]
+            PREOrder = [num + n_order * i for num in FixedMes.PREOrder[j]]
             sucActDict[index] = SUCOrder
-    adj, sucActDict, preActDict = build_adjacency_matrix(sucActDict, exist, n_jzj, n_order)
+            preActDict[index] = PREOrder
+            index+=1
+    n  = n_jzj * n_order
+    adjacency_matrix = [[0 for _ in range(n)] for _ in range(n)]
 
+    for node, successors in sucActDict.items():
+        for successor in successors:
+                adjacency_matrix[node][successor] = 1
+    adj = torch.tensor(adjacency_matrix)
+    sucActDict, preActDict = build_adjacency_matrix(sucActDict, exist, n_jzj, n_order)
     return adj, sucActDict, preActDict, time, exist
 def build_adjacency_matrix(suc, exist, n_jzj, n_orders):
     """
@@ -44,16 +54,17 @@ def build_adjacency_matrix(suc, exist, n_jzj, n_orders):
     新的邻接矩阵表示的有向图。
     """
     n = len(exist)
-    adjacency_matrix = np.eye(n, dtype=np.single)
 
-    for node, successors in suc:
+    adjacency_matrix = [[0 for _ in range(n)] for _ in range(n)]  # 初始化邻接矩阵
+
+    for node, successors in suc.items():
         for successor in successors:
                 adjacency_matrix[node][successor] = 1
 
     adj = torch.tensor(adjacency_matrix)
     # 更新紧前节点的紧后节点集合
     for i in range(n_jzj * n_orders):
-        if exist[i]:
+        if exist[i]==0:
             for j in range(n_jzj * n_orders):
                 if adj[j][i] == 1:
                     adj[j][i] = 0
@@ -61,17 +72,20 @@ def build_adjacency_matrix(suc, exist, n_jzj, n_orders):
                     for num in range(len(adj[j])):
                         if adj[j][num] > 1:
                             adj[j][num] = 1
-            adj[i] = [0 for _ in range(n_jzj * n_orders)]
+            adj[i] = torch.tensor([0 for _ in range(n_jzj * n_orders)])
 
     sucActDict = defaultdict(lambda: [])
+
     preActDict = defaultdict(lambda: [])
     for i in range(n_jzj * n_orders):
+        sucActDict[i] = []
+        preActDict[i] = []
         for j in range(n_jzj * n_orders):
             if adj[i][j] == 1 and i != j:
                 sucActDict[i].append(j)
             if adj[j][i] == 1 and i != j:
                 preActDict[i].append(j)
-    return adjacency_matrix, sucActDict, preActDict
+    return sucActDict, preActDict
 
 
 def getTime(i):

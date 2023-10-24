@@ -20,21 +20,21 @@ def select_action(p, eligible, memory):
         memory.logprobs.append(dist.log_prob(s))
     return s
 
-def conditionUpdateAndCheck(n_orders, pre, exist, current_consumption, finished, partitial, Stations):
+def conditionUpdateAndCheck(n_orders, pre, exist, current_consumption, finished_mark, partitial, Stations):
 
     # 满足紧前工序已完成的工序
     precedence_eligible =[]
     # 满足紧前工序已结束的工序中满足资源约束的工序
     eligible = []
 
-    for i in range(len(finished)):
-        if i in partitial or i in finished or exist[i]==True:
+    for i in range(len(finished_mark)):
+        if i in partitial or finished_mark[i]==1 or exist[i]==0:
             continue
 
         flag = True
         prenumber = pre[i] #前序
         for ordernumber in prenumber:
-            if ordernumber not in finished:
+            if finished_mark[ordernumber] == 0 :
                 flag = False
                 break
         if flag == True:
@@ -46,8 +46,7 @@ def conditionUpdateAndCheck(n_orders, pre, exist, current_consumption, finished,
         consump = [FixedMes.OrderInputMes[col][0][1] if i == FixedMes.OrderInputMes[col][0][0] else 0 for i in
                       range(configs.Human_resource_type)]
 
-        if (less_than(consump, sub_lists(configs.total_Human_resource, current_consumption)))\
-                and judgeStation(row,col,Stations)[0]:
+        if (less_than(consump, sub_lists(configs.total_Human_resource, current_consumption))) and judgeStation(row,col,Stations)[0]:
             eligible.append(i)
     return eligible
 

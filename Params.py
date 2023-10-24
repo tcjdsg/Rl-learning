@@ -2,12 +2,12 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Arguments for ppo_jssp')
 # args for device
-parser.add_argument('--device', type=str, default="cuda", help='Number of jobs of instances')
+parser.add_argument('--device', type=str, default="cpu", help='Number of jobs of instances')
 # args for env
-parser.add_argument('--n_j', type=int, default=4, help='Number of jobs of instance')
-parser.add_argument('--n_m', type=int, default=19, help='Number of machines instance')
+parser.add_argument('--n_jzjs', type=int, default=4, help='Number of jobs of instance')
+parser.add_argument('--n_orders', type=int, default=19, help='Number of machines instance')
 # 特设、航电、军械、机械
-parser.add_argument('--total_Huamn_resource', type=list, default=[4,5,6,8], help='Number of humans')
+parser.add_argument('--total_Human_resource', type=list, default=[4,5,6,8], help='Number of humans')
 parser.add_argument('--Human_resource_type', type=int, default=4, help='Number of humans')
 
 parser.add_argument('--rewardscale', type=float, default=0., help='Reward scale for positive rewards')

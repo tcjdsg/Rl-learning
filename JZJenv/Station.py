@@ -15,11 +15,10 @@ class Station:
         #已完成工序
         self.TaskWait = [] #待完成工序
 
-
-    def update(self,Activity):
-        self.alreadyworkTime += Activity.duration
-        self.OrderOver.append(copy.deepcopy(Activity))
-        self.OrderOver.sort(key=lambda x: x.es)
+    def update(self,Activity,dur):
+        self.alreadyworkTime += dur
+        self.OrderOver.append(Activity)
+      #  self.OrderOver.sort(key=lambda x: x.es)
 
 
 

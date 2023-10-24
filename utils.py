@@ -19,7 +19,8 @@ def add_lists(l1, l2):
 
 def sub_lists(l1, l2):
     return [a - b for a, b in zip(l1, l2)]
-
+def more_lists(l1, l2):
+    return [a + b for a, b in zip(l1, l2)]
 def less_than(l1, l2):
     for i in range(len(l1)):
         if (l1[i] > l2[i]):

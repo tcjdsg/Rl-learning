@@ -24,8 +24,8 @@ class JZJ(gym.Env):
         #self.recordWorkStation = [[0, 0] for _ range()]
         self.adj = adj
         self.step_count = 0
-        self.number_of_JZJ = configs.n_j
-        self.number_of_opera = configs.n_m
+        self.number_of_JZJ = configs.n_jzjs
+        self.number_of_opera = configs.n_orders
         self.number_of_tasks = self.number_of_JZJ * self.number_of_opera
         self.recordWorkStation = [[] for _ in range(self.number_of_tasks)]
         self.recordWorkHuman = [[] for _ in range(self.number_of_tasks)]
@@ -34,7 +34,7 @@ class JZJ(gym.Env):
         self.time = time
         self.exist = exist
         self.distance = FixedMes.distance
-        self.n_humans = configs.total_Huamn_resource
+        self.n_humans = configs.total_Human_resource
         self.number_of_humans = sum(self.n_humans)
         self.allLei = len(self.n_humans)
         self.human_actions = HumanActions(self.number_of_humans)
@@ -42,7 +42,7 @@ class JZJ(gym.Env):
         for i in range(self.allLei-1):
             self.h_index.append(self.h_index[-1] + self.n_humans[i])
 
-        calLFTandMTS(self.activities)
+        #calLFTandMTS(self.activities)
     def done(self):
         if len(self.partial_sol_sequeence) == self.number_of_tasks:
             print(self.Cmax)
@@ -64,14 +64,11 @@ class JZJ(gym.Env):
         #                                      self.running_tasks)
         #基于规则选择工件
         #activityIndex = self.returnActivity(priority_rule)
-
         activityIndex = action
-
         row = activityIndex // self.number_of_opera
         col = activityIndex % self.number_of_opera
 
         type = FixedMes.OrderInputMes[col][0][0]
-
         human1 = self.human_actions[human_a][0]
         human_index1 = human1 - self.h_index[type]
         human2 = self.human_actions[human_a][1]
@@ -81,6 +78,7 @@ class JZJ(gym.Env):
         if activityIndex is not None and activityIndex not in self.partial_sol_sequeence:
 
             [flag, eligibleStation] = judgeStation(row, col, self.Stations)
+
             assert flag == True
             # 更新信息
 
@@ -108,7 +106,7 @@ class JZJ(gym.Env):
             # print("---scheduled: {}---chooseIndex:{}".format(len(self.partial_sol_sequeence),activityIndex//self.number_of_JZJ))
 
             self.can_be_scheduled_mark = torch.tensor(
-                [[0 for _ in range(self.number_of_opera)] for _ in range(self.number_of_JZJ)])
+                [0 for _ in range(self.number_of_tasks)])
             current_time = self.t
 
             self.eligible.remove(activityIndex)
@@ -117,7 +115,7 @@ class JZJ(gym.Env):
             self.scheduled_mark[activityIndex] = 1
                 # 按规则分配设备
 
-            StationInfo = allocationStation(self.number_of_opera, activityIndex, self.Stations, eligibleStation)
+            StationInfo = allocationStation(self.number_of_opera, activityIndex, self.Stations, eligibleStation ,dur_a)
                 # 记录设备工作状态
             if len(StationInfo) > 0:
                     self.recordWorkStation[activityIndex].append(StationInfo)
@@ -138,7 +136,7 @@ class JZJ(gym.Env):
             eli = []
             self.t = current_time
             for i in self.eligible:
-                if (less_than(nowConsump, sub_lists(FixedMes.total_Human_resource, self.current_consumption)))\
+                if (less_than(nowConsump, sub_lists(configs.total_Human_resource, self.current_consumption)))\
                     and judgeStation(i//self.number_of_opera, i%self.number_of_opera, self.Stations)[0] == True:
                     eli.append(i)
 
@@ -165,7 +163,8 @@ class JZJ(gym.Env):
                             #self.LB[i] = self.activities[i].ef # 修改工序完成下限为实际完成时间
                             humanType = FixedMes.OrderInputMes[i%self.number_of_opera][0][0]
                             humanNeed = FixedMes.OrderInputMes[i%self.number_of_opera][0][1]
-                            self.current_consumption = sub_lists(self.current_consumption,
+                            #释放资源
+                            self.current_consumption = more_lists(self.current_consumption,
                                                                  [humanNeed if i == humanType else 0 for i in range(configs.Human_resource_type)])
 
                             if FixedMes.OrderInputMes[i % self.number_of_opera][1][0] >= 0:
@@ -177,14 +176,14 @@ class JZJ(gym.Env):
                     for i in removals:
                         self.running_tasks.remove(i)
 
-                    if (len(self.finished) == self.number_of_tasks):
+                    if (len(self.partial_sol_sequeence) == self.number_of_tasks):
                             break
 
                     self.eligible = conditionUpdateAndCheck(self.number_of_opera,
                                                             self.pre,
                                                             self.exist,
                                                             self.current_consumption,
-                                                            self.finished,
+                                                            self.finished_mark,
                                                             self.partial_sol_sequeence,
                                                             self.Stations)
 
@@ -192,7 +191,7 @@ class JZJ(gym.Env):
 
                     self.can_be_scheduled_mark[num] = 1
 
-            dfsEF(self.pre, self.scheduled_mark, self.number_of_tasks, self.LB)  # 计算每个工序的最早完成时间
+            dfsEF(self.pre, self.scheduled_mark, self.number_of_tasks-1, self.LB)  # 计算每个工序的最早完成时间
             self.end_Time.append(current_time + moveTime + dur_a)
             maxend_Time = sorted(self.end_Time, key=lambda x: x)[-1]
 
@@ -277,64 +276,53 @@ class JZJ(gym.Env):
 
     @override
     def reset(self):
-
         #人员设备初始化
         self.init()
         self.t = 0
-
-
         self.finished_mark = [0 for _ in range(self.number_of_tasks)]
         self.LB = torch.tensor([0.0 for _ in range(self.number_of_tasks)])
-        self.scheduled_mark = torch.tensor([0.0 for _ in range(self.number_of_opera * self.number_of_JZJ)])
-        self.can_be_scheduled_mark = torch.tensor([0.0 for _ in range(self.number_of_opera * self.number_of_JZJ)])
-        dfsEF(self.pre, self.scheduled_mark, self.number_of_tasks, self.LB)  # 计算 self.LB
+        self.scheduled_mark = torch.tensor([0.0 for _ in range(self.number_of_tasks)])
+        self.can_be_scheduled_mark = torch.tensor([0.0 for _ in range(self.number_of_tasks)])
 
+        dfsEF(self.pre, self.scheduled_mark, self.number_of_tasks-1, self.LB)  # 计算 self.LB
         self.running_tasks = []
         self.end_Time = []
-        self.finished = []
         self.step_count = 0
         # record action history
         self.partial_sol_sequeence = []
-
-        #表示工作状态
-        self.stateStation = [[0 for _ in range(FixedMes.total_station_resource[i])]
-                              for i in range(len(FixedMes.total_station_resource))]
-        self.stateHuman = [[0 for _ in range(configs.total_Huamn_resource[i])]
-                              for i in range(len(configs.Human_resource_type))]
-
         self.posRewards = 0
         self.initQuality=0
         self.Cmax = 0
-        self.current_consumption = [0 for _ in range(len(FixedMes.total_Human_resource))]
+        self.current_consumption = [0 for _ in range(configs.Human_resource_type)]
 
         fea = torch.stack((self.LB, self.scheduled_mark, self.can_be_scheduled_mark), dim=0)
-
-        self.h_workTime = torch.tensor([0.0 for _ in self.number_of_humans])
-        self.h_working = torch.tensor([0 for _ in self.number_of_humans])
-        self.can_workTime = torch.tensor([0.0 for _ in self.number_of_humans])
-
+        self.h_workTime = torch.tensor([0.0 for _ in range(self.number_of_humans)])
+        self.h_working = torch.tensor([0 for _ in range(self.number_of_humans)])
+        self.can_workTime = torch.tensor([0.0 for _ in range(self.number_of_humans)])
         fea_h = torch.stack((self.h_workTime, self.h_working, self.can_workTime), dim=0)
-
         #allltasks,current_consumption,running,allNums,finished
-        self.eligible = conditionUpdateAndCheck(self.number_of_opera,
-                                                self.pre,
-                                                self.exist,
-                                                self.current_consumption,
-                                                self.finished,
-                                                self.partial_sol_sequeence,
-                                                self.Stations)
+        self.eligible = conditionUpdateAndCheck(self.number_of_opera,self.pre,self.exist,self.current_consumption,self.finished_mark,self.partial_sol_sequeence,self.Stations)
 
-        self.mask_order = np.full(shape=(self.number_of_JZJ * self.number_of_opera), fill_value=0, dtype=bool)
-        self.mask_human = np.full(shape=(self.number_of_JZJ * self.number_of_opera), fill_value=0, dtype=bool)
+        self.task_mask = [1 if i not in self.eligible else 0 for i in range(self.number_of_tasks)]
+        self.human_mask = [0 for _ in self.can_workTime]
+        # for i in range(self.number_of_humans):
+        #     if self.can_workTime[i] >self.t or i < self.h_index[]
 
-        return fea.to(device), self.adj.to(device), fea_h.to(device),
+        return fea.to(device), self.adj.to(device), fea_h.to(device)
 
 if __name__ == '__main__':
-    adj, sucActDict, preActDict, time, exist = getData(configs.n_jzj, configs.n_order, configs.n_human)
+    adj, sucActDict, preActDict, time, exist = getData(configs.n_jzjs, configs.n_orders, configs.total_Human_resource)
     env = JZJ(adj, sucActDict, preActDict, time, exist)
     a,b,c = env.reset()
-    for i in range(configs.n_j* configs.n_m):
+    h_index = [0]
+    for i in range(4 - 1):
+        h_index.append(h_index[-1] + configs.total_Human_resource[i])
+    a = [i for i in range(configs.n_jzjs*configs.n_orders)]
+    for i in range(configs.n_jzjs* configs.n_orders):
+        print(i)
 
-        env.step(3)
+        type = FixedMes.OrderInputMes[env.eligible[0]%configs.n_orders][0][0]
+
+        env.step(env.eligible[0],h_index[type])
     Draw_gantt(env.Humans)
 
