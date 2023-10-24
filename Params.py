@@ -4,8 +4,12 @@ parser = argparse.ArgumentParser(description='Arguments for ppo_jssp')
 # args for device
 parser.add_argument('--device', type=str, default="cuda", help='Number of jobs of instances')
 # args for env
-parser.add_argument('--n_j', type=int, default=8, help='Number of jobs of instance')
+parser.add_argument('--n_j', type=int, default=4, help='Number of jobs of instance')
 parser.add_argument('--n_m', type=int, default=19, help='Number of machines instance')
+# 特设、航电、军械、机械
+parser.add_argument('--total_Huamn_resource', type=list, default=[4,5,6,8], help='Number of humans')
+parser.add_argument('--Human_resource_type', type=int, default=4, help='Number of humans')
+
 parser.add_argument('--rewardscale', type=float, default=0., help='Reward scale for positive rewards')
 parser.add_argument('--init_quality_flag', type=bool, default=False, help='Flag of whether init state quality is 0, True for 0')
 parser.add_argument('--low', type=int, default=1, help='LB of duration')
@@ -29,7 +33,9 @@ parser.add_argument('--hidden_dim_critic', type=int, default=32, help='hidden di
 # args for PPO
 parser.add_argument('--num_envs', type=int, default=4, help='No. of envs for training')
 parser.add_argument('--lamda', type=float, default=0.99, help='GAE parameter')
-parser.add_argument('--max_updates', type=int, default=500, help='No. of episodes of each env for training')
+parser.add_argument('--max_updates', type=int, default=20, help='No. of episodes of each env for training')
+parser.add_argument('--max_iterations', type=int, default=1000, help='No. of episodes  for training')
+
 parser.add_argument('--lr', type=float, default=2e-5, help='lr')
 parser.add_argument('--decayflag', type=bool, default=False, help='lr decayflag')
 parser.add_argument('--decay_step_size', type=int, default=100, help='decay_step_size')

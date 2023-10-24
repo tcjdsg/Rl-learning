@@ -1,7 +1,5 @@
 from collections import defaultdict
 
-
-
 class FixedMes(object):
     """
     distance:
@@ -11,30 +9,29 @@ class FixedMes(object):
     #全局时钟
     t = 0
 
-
-    distance = [[]]
-
-    numJzjPos = 18
-    numHumanAll = [18,60]
-
-    planeOrderNum = 19
-    planeNum = 8
-    jzjNumbers=[1,2,3,4,5,6,7,8]  #舰载机编号
-    jzjStartTime = [0,1,2,3,4,5,6,7] #舰载机入场时间
+    distance = [[0,10,20,30,40,53,62,73,84,126,139,147],
+                [10,0,10,20,30,43,52,63,74,117,130,138],
+                [20,10,0,10,20,33,42,53,64,108,121,129],
+                [30,20,10,0,10,23,32,43,54,101,114,122],
+                [5,40,30,20,10,0,13,22,33,44,97,110,117],
+                [53,43,33,23,13,0,9,20,31,89,101,108],
+                [62,52,42,32,22,9,0,11,22,82,94,100],
+                [73,63,53,43,33,20,11,0,12,77,89,95],
+                [84,74,64,54,44,31,22,12,0,78,88,93],
+                [126,117,108,101,97,89,82,77,78,0,13,21],
+                [139,130,121,114,110,101,94,89,88,13,0,9],
+                [147,138,129,122,117,108,100,95,93,21,9,0]]
 
     #座舱限制。相当于是每个站位都有一个座舱，每个舰载机只能用自己座舱。
-    space_resource_type = planeNum
-    total_space_resource = [1 for i in range(planeNum)]
-    Human_resource_type = 4
-    # 特设、航电、军械、机械
-    total_Huamn_resource = [4,5,6,8]  # 每种人员数量
+    # space_resource_type = planeNum
+    # total_space_resource = [1 for i in range(planeNum)]
 
     # total_Huamn_resource = [30]
     constraintOrder = defaultdict(lambda: []) #记录每类人的可作用工序，和可作用舰载机范围
     # constraintOrder[0] = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
 
-    constraintOrder[0] = [ 1, 2, 5]
-    constraintOrder[1] = [3,4, 16,17]
+    constraintOrder[0] = [1, 2, 5]
+    constraintOrder[1] = [3, 4, 16,17]
     constraintOrder[2] = [7, 8, 14,16]
     constraintOrder[3] = [6, 9, 10, 11,12,13,15]
 
@@ -97,7 +94,6 @@ class FixedMes(object):
                           [12]
                           ]
 
-    Activity_num  = (planeOrderNum)*planeNum #活动数量
 
     #工序顺序
     SUCOrder = defaultdict(lambda: [])
@@ -212,76 +208,22 @@ class FixedMes(object):
 
     lowTime = 120  # 不能超过90 min
     HS = 3
-    Lpk = [0 for _ in range(Human_resource_type)]
-    for p in range(planeNum):
-        for i in range(0,planeOrderNum):
-            needRtype = OrderInputMes[i][0][0]
-            needNums = OrderInputMes[i][0][1]
-            dur = OrderTime[i]
-            Lpk[needRtype] += HS*needNums*dur/lowTime
-
-    Lpk = [int(i) for i in Lpk]
-    total_Human_resource = Lpk
+    # Lpk = [0 for _ in range(Human_resource_type)]
+    # for p in range(planeNum):
+    #     for i in range(0,planeOrderNum):
+    #         needRtype = OrderInputMes[i][0][0]
+    #         needNums = OrderInputMes[i][0][1]
+    #         dur = OrderTime[i]
+    #         Lpk[needRtype] += HS*needNums*dur/lowTime
+    #
+    # Lpk = [int(i) for i in Lpk]
+    # total_Human_resource = Lpk
     sigma = 0.3
     shedule_num=0
     act_info={}
 
+    human_walk_speed = 80 #人员行走速度8 m/(in)
 
-    cross = 0.5
-    cross1 = 2.5
-    MutationRate = 0.25
-    MutationRatePmo = 0.05
-
-    transferrate = 0.2
-    transfer_iter = 50
-    human_walk_speed = 800000000 #人员行走速度8 m/(in)
-
-    populationnumber = 40
-    ge = 100
-    threadNum = 1
-    populationnumberson = populationnumber
-
-    AgenarationIten = ge / 3
-    GenarationIten = 0
-
-    #保存每代染色体信息 父代
-    AllFit = []
-    AllFitSon = []
-    AllFitFamily = []
-    #vnsIter = -1
-
-    resver_k1 = [ 0 for _ in range(ge)]
-    resver_k2 = [ 0 for _ in range(ge)]
-    #populationnumber*populationnumber
-    slect_F_step_alone = [[] for _ in range(populationnumber)]
-    # slect_F_step = [[] for _ in range(populationnumber)]
-
-    Paternal = [[0,0] for _ in range(int(populationnumber/2))]
-    #每一代的平均值
-    Avufit = {}
-    BestCmax = {}
-    BestPr = {}
-    BestEcmax = {}
-    Bestzonghe = {}
-    var ={}
-    f = {}
-    d = {}
-    m = {}
-
-    AverPopmove = 0
-    AverPopTime = 0
-    AverPopVar = 0
-    Diversity = 0.0
-    keyChainOrder = []
-    #死锁辅助检查列表
-    # dealLockList=[[0 for _ in range(Activity_num)] for _ in range(Activity_num)]
-
-    bestHumanNumberTarget=[]
-
-    Allactivity = []
-    constraintHuman =[]
-    constraintStation=[]
-    constraintSpace = []
 
     humanNum = 0
     targetWeight =[1,0.3,0.1]

@@ -1,13 +1,14 @@
 import copy
 
-from JZJ_PPO.JZJenv.FixedMess import FixedMes
+from JZJenv.FixedMess import FixedMes
+from Params import configs
 from utils import *
 
 
 def calLFTandMTS(SucOrder):
-    for i in range(FixedMes.planeNum):
-        dfsLFT(SucOrder, i*FixedMes.planeOrderNum)
-        dfsMTS(SucOrder, i*FixedMes.planeOrderNum)
+    for i in range(configs.n_jzjs):
+        dfsLFT(SucOrder, i*configs.n_orders)
+        dfsMTS(SucOrder, i*configs.n_orders)
     calculate_grpw(SucOrder)
     calculate_grd(SucOrder)
 
@@ -22,20 +23,16 @@ def dfsLFT(SucOrder, i):
     SucOrder[i].ls = time - SucOrder[i].duration
     return time
 
-def dfsEF(activities, i, LB):
-    if len(activities[i].precessor) == 0:
-        activities[i].es = 0
-        activities[i].ef = 0
-        LB.append(0)
+def dfsEF(pre, scheduled_mark, i, LB):
+    if len(pre[i]) == 0:
+        LB[i] = 0
         return 0
     time = 0
-    for Orderid in activities[i].pre:
-        time = max(time, dfsEF(activities, Orderid, LB))
-    if ~activities[i].scheduled:
-        activities[i].es = time
-        activities[i].ef = time + activities[i].duration
-    LB.append(activities[i].ef)
-    return activities[i].ef
+    for Orderid in pre[i]:
+        time = max(time, dfsEF(pre, scheduled_mark, Orderid, LB))
+    if scheduled_mark[i] != 1:
+        LB[i] = time
+    return LB[i]
 
 def dfsMTS(SucOrder,i):
     if len(SucOrder[i].successor) == 0:

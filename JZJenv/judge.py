@@ -61,21 +61,19 @@ def judgeHuman(Human, type, resourceRequestH1, resourceSumH1, recordH1, now_pos,
 
     return resourceSumH1, recordH1
 
-def judgeStation(allTasks, selectTaskID,recordStation):
-        now_pos = allTasks[selectTaskID].belong_plane_id
+def judgeStation(now_pos, TaskID,recordStation):
+
         recordStationID =[]
-
         # 假设一个工序只需要一个机器
-
-        if allTasks[selectTaskID].RequestStationType >= 0:
-                type = allTasks[selectTaskID].RequestStationType
+        if FixedMes.OrderInputMes[TaskID][1][0].RequestStationType >= 0:
+                type = FixedMes.OrderInputMes[TaskID][1][0].RequestStationType
                 for stationID in range(len(recordStation[type])):
                 # 舰载机在这个加油站的覆盖范围内：
                     if now_pos in FixedMes.constraintS_JZJ[type][stationID]:
                         # 当前这个站没有工序在进行
-                        if recordStation[type][stationID]==0:
+                        if ~recordStation[type][stationID].working :
                             recordStationID.append(stationID)
-                if len(recordStationID)>0:
+                if len(recordStationID) > 0:
                     flag = True
                 else:
                     flag =False
@@ -88,9 +86,9 @@ def judgeStation(allTasks, selectTaskID,recordStation):
 
 #recordStation  可用Station集合 eligibleStation
 #recordS  所有Station
-def allocationStation(task, recordS, recordStation):
+def allocationStation(n_orders,activityIndex, recordS, recordStation):
 
-            typeS = task.RequestStationType
+            typeS = FixedMes.OrderInputMes[activityIndex%n_orders][1][0]
             if typeS >= 0:
                 alreadyWorkTime = math.inf
                 index = 0
@@ -99,11 +97,9 @@ def allocationStation(task, recordS, recordStation):
                         if nowStaion.alreadyworkTime < alreadyWorkTime:
                             alreadyWorkTime = nowStaion.alreadyworkTime
                             index = nowStaion.zunumber
-
                 # 更新
-                recordS[typeS][index].update(task)
+                recordS[typeS][index].update(activityIndex)
                 recordS[typeS][index].working = True
-                task.SheiBei.append([typeS, index])
                 return [typeS,index]
             return []
 

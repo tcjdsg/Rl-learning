@@ -1,6 +1,4 @@
-import numpy as np
 
-#Order(i + 1, duration, resource, pre)
 class Order(object):
     '''
     活动类：包含  1.活动总ID  、舰载机活动Id，舰载机Id
@@ -8,7 +6,7 @@ class Order(object):
      5.活动最早开始时间  6.活动最晚开始时间  7.活动是否被访问
     '''
 
-    def __init__(self, id,taskid, duration, RequestHumanType,needHuman, RequestStationType, resourceRequestSpace, successor, jzjId):
+    def __init__(self, id,taskid, duration, RequestHumanType, needHuman, RequestStationType,  successor, jzjId):
         self.id = id
         self.taskid = taskid
         self.belong_plane_id = jzjId
@@ -20,7 +18,7 @@ class Order(object):
         self.resourceRequestH = RequestHumanType
         self.needH = needHuman
         self.RequestStationType = RequestStationType
-        self.resourceRequestSpace = resourceRequestSpace
+
         self.predecessor = None
         self.successor = successor
         self.es = 0
