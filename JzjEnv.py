@@ -37,14 +37,14 @@ class JZJ(gym.Env):
         self.n_humans = configs.total_Human_resource
         self.number_of_humans = sum(self.n_humans)
         self.allLei = len(self.n_humans)
-        self.human_actions = HumanActions(self.number_of_humans)
+        self.human_actions,self.human_a_index = HumanActions(self.n_humans)
         self.h_index = [0]
         for i in range(self.allLei-1):
             self.h_index.append(self.h_index[-1] + self.n_humans[i])
 
         #calLFTandMTS(self.activities)
     def done(self):
-        if len(self.partial_sol_sequeence) == self.number_of_tasks:
+        if len(self.partial_sol_sequeence) == sum(self.exist):
             print(self.Cmax)
             return True
         return False
@@ -85,23 +85,29 @@ class JZJ(gym.Env):
             self.step_count += 1
             dur_a = self.time[activityIndex]
 
+
             human_pos1 = self.Humans[type][human_index1].NowJZJ
             human_pos2 = self.Humans[type][human_index2].NowJZJ
 
+            self.Humans[type][human_index1].update(activityIndex,dur_a)
+            self.Humans[type][human_index1].workig = True
             self.recordWorkHuman[activityIndex].append([type,human_index1])
-            if human_index1!=human_index2:
-                self.recordWorkHuman[activityIndex].append([type, human_index2])
 
             to_pos = row
             moveTime1 = self.distance[human_pos1][to_pos] / FixedMes.human_walk_speed
             moveTime2 = self.distance[human_pos2][to_pos] / FixedMes.human_walk_speed
             moveTime = max(moveTime1, moveTime2)
             self.can_workTime[human1] = current_time + moveTime + dur_a
-            self.can_workTime[human2] = current_time + moveTime + dur_a
             self.h_workTime[human1] += dur_a
-            self.h_workTime[human2] += dur_a
             self.h_working[human1] = 1
-            self.h_working[human2] = 1
+            if human_index1 != human_index2:
+                self.Humans[type][human_index2].update(activityIndex, dur_a)
+                self.Humans[type][human_index2].workig = True
+                self.recordWorkHuman[activityIndex].append([type, human_index2])
+                self.h_workTime[human2] += dur_a
+                self.h_working[human2] = 1
+                self.can_workTime[human2] = current_time + moveTime + dur_a
+
 
             # print("---scheduled: {}---chooseIndex:{}".format(len(self.partial_sol_sequeence),activityIndex//self.number_of_JZJ))
 
@@ -122,8 +128,7 @@ class JZJ(gym.Env):
                     self.Stations[StationInfo[0]][StationInfo[1]].working = True
             self.running_tasks.append(activityIndex)
 
-            self.LB[activityIndex].es = current_time + moveTime
-            self.LB[activityIndex].ef = current_time + moveTime + dur_a
+            self.LB[activityIndex] = current_time + moveTime + dur_a
 
             for i in range(self.number_of_humans):
                 if self.can_workTime[i] < current_time:
@@ -147,7 +152,20 @@ class JZJ(gym.Env):
             else:
                 #找到新的最早结束时间
                 while len(self.eligible) == 0:
-                    self.t = sorted([self.LB[i] for i in self.running_tasks])[0]
+                    if (len(self.partial_sol_sequeence) == sum(self.exist)):
+                        break
+                    try:
+                        self.t = sorted([self.LB[i] for i in self.running_tasks])[0]
+                    except:
+                        print("----------------")
+                        self.eligible = conditionUpdateAndCheck(self.number_of_opera,
+                                                                self.pre,
+                                                                self.exist,
+                                                                self.current_consumption,
+                                                                self.finished_mark,
+                                                                self.partial_sol_sequeence,
+                                                                self.Stations)
+
                     current_time = self.t
                     for i in range(self.number_of_humans):
                         # 如果当前时间大于人员最早可用时间，则修改人员可用时间为当前时间，人员状态为空闲
@@ -155,29 +173,36 @@ class JZJ(gym.Env):
                             self.h_working[i] = 0
                             self.can_workTime[i] = current_time
 
-                    removals =[]
+                    removals = []
                     for i in self.running_tasks:
                         if (self.LB[i] <= current_time and self.scheduled_mark[i] == 1):
-                            self.finished.append(i)
+
                             self.finished_mark[i] = 1
                             #self.LB[i] = self.activities[i].ef # 修改工序完成下限为实际完成时间
-                            humanType = FixedMes.OrderInputMes[i%self.number_of_opera][0][0]
-                            humanNeed = FixedMes.OrderInputMes[i%self.number_of_opera][0][1]
+                            humanType = FixedMes.OrderInputMes[i % self.number_of_opera][0][0]
+                            humanNeed = FixedMes.OrderInputMes[i % self.number_of_opera][0][1]
                             #释放资源
-                            self.current_consumption = more_lists(self.current_consumption,
+                            self.current_consumption = sub_lists(self.current_consumption,
                                                                  [humanNeed if i == humanType else 0 for i in range(configs.Human_resource_type)])
 
-                            if FixedMes.OrderInputMes[i % self.number_of_opera][1][0] >= 0:
+                            if FixedMes.OrderInputMes[i % self.number_of_opera][1][1] > 0:
+                                typeH = self.recordWorkHuman[i][0][0]
+                                index = self.recordWorkHuman[i][0][1]
+                                self.Humans[typeH][index].workig = False
+                                if FixedMes.OrderInputMes[i % self.number_of_opera][1][1] > 1:
+                                    typeH = self.recordWorkHuman[i][1][0]
+                                    index = self.recordWorkHuman[i][1][1]
+                                    self.Humans[typeH][index].workig = False
+                            # FixedMes.OrderInputMes[TaskID][1][1] > 0:
+                            if FixedMes.OrderInputMes[i % self.number_of_opera][1][1] > 0:
                                 typeS = self.recordWorkStation[i][0][0]
                                 index = self.recordWorkStation[i][0][1]
+
                                 self.Stations[typeS][index].working = False
 
                             removals.append(i)
                     for i in removals:
                         self.running_tasks.remove(i)
-
-                    if (len(self.partial_sol_sequeence) == self.number_of_tasks):
-                            break
 
                     self.eligible = conditionUpdateAndCheck(self.number_of_opera,
                                                             self.pre,
@@ -212,7 +237,6 @@ class JZJ(gym.Env):
         return fea.to(device), fea_h.to(device), reward, self.done(), self.Cmax, self.task_mask, self.human_mask
     def returnActivity(self, priority_rule):
         value_lists = []
-
         if (priority_rule == 'LFT'):
             for i in self.eligible:
                 value_lists.append(self.activities[i].lf)
@@ -314,15 +338,14 @@ if __name__ == '__main__':
     adj, sucActDict, preActDict, time, exist = getData(configs.n_jzjs, configs.n_orders, configs.total_Human_resource)
     env = JZJ(adj, sucActDict, preActDict, time, exist)
     a,b,c = env.reset()
-    h_index = [0]
-    for i in range(4 - 1):
-        h_index.append(h_index[-1] + configs.total_Human_resource[i])
-    a = [i for i in range(configs.n_jzjs*configs.n_orders)]
-    for i in range(configs.n_jzjs* configs.n_orders):
-        print(i)
+    acs, index = HumanActions(configs.total_Human_resource)
+    print(sum(exist))
 
+    for i in range(sum(exist)):
+        print(i)
         type = FixedMes.OrderInputMes[env.eligible[0]%configs.n_orders][0][0]
 
-        env.step(env.eligible[0],h_index[type])
+        env.step(env.eligible[0],index[type])
+
     Draw_gantt(env.Humans)
 

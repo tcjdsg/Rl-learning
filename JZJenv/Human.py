@@ -22,27 +22,28 @@ class Human:
         self.TaskWait = [] #待完成工序
         self.WalkTask = [] #走
 
-    def update(self, Activity):
-        self.OrderOver.append(copy.deepcopy(Activity))
-        self.OrderOver.sort(key=lambda x: x.es)
+    def update(self, ActivityI,dur):
+        self.OrderOver.append(ActivityI)
+        self.alreadyworkTime += dur
 
-        temp=[]
-        self.record_fatigue=[[0,0]]
-        self.fatigue =0
+        # self.OrderOver.sort(key=lambda x: x.es)
+        #
+        # temp=[]
+        # self.record_fatigue=[[0,0]]
+        # self.fatigue =0
+        #
+        # for i in range(len(self.OrderOver)):
+        #     activ = self.OrderOver[i]
+        #     temp.append(activ)
+        #     vacp = activ.vacp
+        #     if i==0:
+        #         self.fatigue += (activ.es - 0) * self.rest
+        #     else:
+        #         self.fatigue += (activ.es - temp[-2].ef) * self.rest
+        #     self.record_fatigue.append([activ.es, self.fatigue])
+        #     self.fatigue += activ.duration * vacp
+        #     self.record_fatigue.append([activ.ef, self.fatigue])
 
-        for i in range(len(self.OrderOver)):
-            activ = self.OrderOver[i]
-            temp.append(activ)
-            vacp = activ.vacp
-            if i==0:
-                self.fatigue += (activ.es - 0) * self.rest
-            else:
-                self.fatigue += (activ.es - temp[-2].ef) * self.rest
-            self.record_fatigue.append([activ.es, self.fatigue])
-            self.fatigue += activ.duration * vacp
-            self.record_fatigue.append([activ.ef, self.fatigue])
-
-        self.alreadyworkTime += Activity.duration
 
     def getfatigue(self, time):
         # fatigue = self.fatigue+self.rest * (time - self.OrderOver[-1].ef)

@@ -69,7 +69,7 @@ def judgeStation(now_pos, TaskID,recordStation):
                 type = FixedMes.OrderInputMes[TaskID][1][0]
                 for stationID in range(len(recordStation[type])):
                 # 舰载机在这个加油站的覆盖范围内：
-                    if now_pos in FixedMes.constraintS_JZJ[type][stationID]:
+                    if (now_pos+1) in FixedMes.constraintS_JZJ[type][stationID]:
                         # 当前这个站没有工序在进行
                         if recordStation[type][stationID].working == False:
                             recordStationID.append(stationID)
@@ -89,7 +89,8 @@ def judgeStation(now_pos, TaskID,recordStation):
 def allocationStation(n_orders,activityIndex, recordS, recordStation,dur):
 
             typeS = FixedMes.OrderInputMes[activityIndex%n_orders][1][0]
-            if typeS >= 0:
+            need =  FixedMes.OrderInputMes[activityIndex%n_orders][1][1]
+            if need > 0:
                 alreadyWorkTime = math.inf
                 index = 0
                 for stationID in recordStation:
@@ -102,7 +103,22 @@ def allocationStation(n_orders,activityIndex, recordS, recordStation,dur):
                 recordS[typeS][index].working = True
                 return [typeS,index]
             return []
-
+def allocationStationStatic(n_orders,activityIndex, recordS, dur):
+    typeS = FixedMes.OrderInputMes[activityIndex % n_orders][1][0]
+    need = FixedMes.OrderInputMes[activityIndex % n_orders][1][1]
+    if need > 0:
+        alreadyWorkTime = math.inf
+        index = 0
+        for stationID in range(recordS[typeS]):
+            nowStaion = recordS[typeS][stationID]
+            if nowStaion.alreadyworkTime < alreadyWorkTime:
+                alreadyWorkTime = nowStaion.alreadyworkTime
+                index = nowStaion.zunumber
+        # 更新
+        recordS[typeS][index].update(activityIndex, dur)
+        recordS[typeS][index].working = True
+        return [typeS, index]
+    return []
 def allocationHuman(task, Humans):
 
     for type in range(len(task.resourceRequestH)):

@@ -222,8 +222,8 @@ class FixedMes(object):
     shedule_num=0
     act_info={}
 
-    human_walk_speed = 80 #人员行走速度8 m/(in)
-
+    human_walk_speed = 0.72 #人员行走速度0.72s/m
+    station_tranfer_speed = 1.2
 
     humanNum = 0
     targetWeight =[1,0.3,0.1]

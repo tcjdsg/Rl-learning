@@ -21,32 +21,26 @@ def select_action(p, eligible, memory):
     return s
 
 def conditionUpdateAndCheck(n_orders, pre, exist, current_consumption, finished_mark, partitial, Stations):
-
-    # 满足紧前工序已完成的工序
-    precedence_eligible =[]
-    # 满足紧前工序已结束的工序中满足资源约束的工序
-    eligible = []
-
+    precedence_eligible = []# 满足紧前工序已完成的工序
+    eligible = []# 满足紧前工序已结束的工序中满足资源约束的工序
     for i in range(len(finished_mark)):
         if i in partitial or finished_mark[i]==1 or exist[i]==0:
             continue
-
         flag = True
-        prenumber = pre[i] #前序
+        prenumber = pre[i]# 前序
         for ordernumber in prenumber:
-            if finished_mark[ordernumber] == 0 :
+            if finished_mark[ordernumber] == 0:
                 flag = False
                 break
         if flag == True:
             precedence_eligible.append(i)
-
     for i in precedence_eligible:
         row = i // n_orders
         col = i % n_orders
         consump = [FixedMes.OrderInputMes[col][0][1] if i == FixedMes.OrderInputMes[col][0][0] else 0 for i in
-                      range(configs.Human_resource_type)]
+                    range(configs.Human_resource_type)]
 
-        if (less_than(consump, sub_lists(configs.total_Human_resource, current_consumption))) and judgeStation(row,col,Stations)[0]:
+        if (less_than(consump, sub_lists(configs.total_Human_resource, current_consumption))) and judgeStation(row, col,Stations)[0]:
             eligible.append(i)
     return eligible
 

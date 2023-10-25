@@ -8,12 +8,20 @@ from JZJenv.Activitity import Order
 
 
 # [1,1],[1,2],[1,3],[1,4]..[2,2],[2,3],[2,4],..
-def HumanActions(number_humans):
+def HumanActions(n_humans):
+    h_index = [0]
+    for i in range(len(n_humans) - 1):
+        h_index.append(h_index[-1] + n_humans[i])
     actions = []
-    for cur in range(0, number_humans):
-        for i in range(cur, number_humans):
-            actions.append([cur, i])
-    return actions
+    human_actions_index = []
+    for typeH in range(len(n_humans)):
+        human_actions_index.append(len(actions))
+        number_of_h = n_humans[typeH]
+        cur = h_index[typeH]
+        for i in range(cur, cur + number_of_h):
+            for j in range(i, cur + number_of_h):
+                actions.append([i, j])
+    return actions,human_actions_index
 def add_lists(l1, l2):
     return [sum(x) for x in zip(l1, l2)]
 
@@ -139,12 +147,16 @@ class RewardScaling:
 
 if __name__ == '__main__':
     # 测试示例
-    graph = {
-        'A': ['B', 'C'],
-        'B': ['C', 'D'],
-        'C': ['D'],
-        'D': []
-    }
+    # graph = {
+    #     'A': ['B', 'C'],
+    #     'B': ['C', 'D'],
+    #     'C': ['D'],
+    #     'D': []
+    # }
+    #
+    # subgraph = generate_subgraph(graph, num_start_nodes=random.randint(2, len(graph.keys())))
+    # print(subgraph)
 
-    subgraph = generate_subgraph(graph, num_start_nodes=random.randint(2, len(graph.keys())))
-    print(subgraph)
+    ac,index= HumanActions([1,2,3,4])
+    print(ac)
+    print(index)
